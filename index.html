@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scoreyard</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="game-panel" aria-labelledby="game-title">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Sites game</p>
+            <h1 id="game-title">Scoreyard</h1>
+          </div>
+          <div class="storage-status" id="storageStatus">Checking storage...</div>
+        </header>
+
+        <div class="play-layout">
+          <section class="arena-wrap" aria-label="Game arena">
+            <div class="hud">
+              <div>
+                <span class="hud-label">Score</span>
+                <strong id="scoreValue">0</strong>
+              </div>
+              <div>
+                <span class="hud-label">Orbs</span>
+                <strong id="orbValue">0</strong>
+              </div>
+              <div>
+                <span class="hud-label">Health</span>
+                <strong id="healthValue">3</strong>
+              </div>
+              <div>
+                <span class="hud-label">Time</span>
+                <strong id="timeValue">45</strong>
+              </div>
+              <div>
+                <span class="hud-label">Combo</span>
+                <strong id="comboValue">x1</strong>
+              </div>
+              <div>
+                <span class="hud-label">Shield</span>
+                <strong id="shieldValue">0</strong>
+              </div>
+            </div>
+            <div class="game-stage">
+              <canvas id="gameCanvas" width="720" height="460" aria-label="Collect orbit crystals, grab shields, and dodge coral hazards"></canvas>
+              <div class="home-screen" id="homeScreen">
+                <div class="home-content">
+                  <p class="home-kicker">Retro arcade run</p>
+                  <h2>Scoreyard</h2>
+                  <p class="home-copy">Collect crystals, chain combos, grab power cores, and break the Core Warden.</p>
+                  <div class="home-chips" aria-label="Game features">
+                    <span>7 power-ups</span>
+                    <span>boss phase</span>
+                    <span>persistent scores</span>
+                  </div>
+                  <button type="button" class="primary-btn arcade-start" id="homeStartGame">Insert coin / start</button>
+                </div>
+              </div>
+            </div>
+            <div class="controls-row">
+              <button type="button" class="primary-btn" id="startGame">Start run</button>
+              <button type="button" id="endGame">End run</button>
+              <span class="hint">Move with WASD, arrows, or drag. Collect crystals, power-ups, and survive the Core Warden boss phase.</span>
+            </div>
+          </section>
+
+          <aside class="profile-card player-dock" aria-labelledby="profile-title">
+            <div class="profile-heading">
+              <p class="eyebrow">Player station</p>
+              <h2 id="profile-title">Player profile</h2>
+            </div>
+            <form id="profileForm" class="profile-form">
+              <div class="avatar-preview">
+                <img id="avatarPreview" alt="Current player avatar">
+                <div>
+                  <strong id="profileName">Guest player</strong>
+                  <span id="profileEmail">Add your workspace account</span>
+                </div>
+              </div>
+              <label>
+                Workspace name
+                <input id="playerName" name="playerName" autocomplete="name" required maxlength="40" placeholder="Alex Rivera">
+              </label>
+              <label>
+                Workspace email
+                <input id="playerEmail" name="playerEmail" autocomplete="email" type="email" required maxlength="80" placeholder="alex@company.com">
+              </label>
+              <label class="avatar-picker">
+                Avatar upload
+                <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
+              </label>
+              <button type="submit">Save profile</button>
+            </form>
+          </aside>
+        </div>
+      </section>
+
+      <section class="leaderboard-panel" aria-labelledby="leaderboard-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Persistent scores</p>
+            <h2 id="leaderboard-title">Leaderboard</h2>
+          </div>
+          <div class="filters" aria-label="Leaderboard filters">
+            <input id="scoreSearch" type="search" placeholder="Filter players">
+            <select id="scoreFilter" aria-label="Score filter">
+              <option value="all">All scores</option>
+              <option value="mine">My scores</option>
+              <option value="today">Today</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Player</th>
+                <th scope="col">Score</th>
+                <th scope="col">Orbs</th>
+                <th scope="col">Length</th>
+                <th scope="col">Saved</th>
+              </tr>
+            </thead>
+            <tbody id="scoreRows"></tbody>
+          </table>
+        </div>
+        <p class="empty-state" id="emptyState">No scores yet. Start a run to seed the board.</p>
+      </section>
+    </main>
+
+    <template id="scoreRowTemplate">
+      <tr>
+        <td>
+          <div class="player-cell">
+            <img alt="">
+            <div>
+              <strong></strong>
+              <span></span>
+            </div>
+          </div>
+        </td>
+        <td class="score-cell"></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

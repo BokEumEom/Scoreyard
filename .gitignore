@@ -1,0 +1,7 @@
+# gstack local artifacts (not project files)
+.gstack/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
