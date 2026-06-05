@@ -980,3 +980,12 @@ th {
   width: 100%;
   margin-top: 0.5rem;
 }
+
+/* Pace delta HUD value (E2) — sign carries meaning, color reinforces */
+#paceValue.pace-ahead {
+  color: var(--mint);
+}
+
+#paceValue.pace-behind {
+  color: var(--coral);
+}

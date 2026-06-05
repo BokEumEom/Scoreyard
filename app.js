@@ -8,6 +8,7 @@ import { dailySeed, utcDateKey } from "./seed.js";
 import { normalizeProfile, recordRun, todayBest, playedToday } from "./store.js";
 import * as audio from "./audio.js";
 import { buildShareString } from "./share.js";
+import { paceDelta } from "./pace.js";
 
 const DB_NAME = "scoreyard-sites-storage";
   const DB_VERSION = 2; // v2: profile gains best-score/daily/unlock fields (migration via normalizeProfile on read)
@@ -32,6 +33,7 @@ const DB_NAME = "scoreyard-sites-storage";
   const timeValue = document.getElementById("timeValue");
   const comboValue = document.getElementById("comboValue");
   const shieldValue = document.getElementById("shieldValue");
+  const paceValue = document.getElementById("paceValue");
   const startGameButton = document.getElementById("startGame");
   const homeScreen = document.getElementById("homeScreen");
   const homeStartGameButton = document.getElementById("homeStartGame");
@@ -61,6 +63,7 @@ const DB_NAME = "scoreyard-sites-storage";
   let currentMode = "free"; // "daily" | "free" — locked at run start
   let currentDateKey = null; // UTC YYYY-MM-DD locked at run start (for daily best)
   let lastResult = null; // last finished run's stats (for the share string)
+  let currentBestCurve = null; // best-run score-by-second curve for the active daily
   let avatarImage = new Image();
   let lastFrame = 0;
   let rafId = 0;
@@ -139,7 +142,9 @@ const DB_NAME = "scoreyard-sites-storage";
     pointerY: 230,
     shake: 0,
     flash: 0,
-    worldTime: 0
+    worldTime: 0,
+    hitstop: 0, // seconds of frame-freeze remaining (E3)
+    paceSamples: [] // score at end of each whole second this run (E2)
   };
 
   assets = {
@@ -567,6 +572,8 @@ const DB_NAME = "scoreyard-sites-storage";
     game.shake = 0;
     game.flash = 0;
     game.worldTime = 0;
+    game.hitstop = 0;
+    game.paceSamples = [];
     scoreValue.textContent = "0";
     orbValue.textContent = "0";
     healthValue.textContent = "3";
@@ -590,6 +597,13 @@ const DB_NAME = "scoreyard-sites-storage";
     }
     currentMode = mode === "daily" ? "daily" : "free";
     currentDateKey = utcDateKey(); // lock at run start (survives midnight rollover mid-run)
+    // Pace comparison: load today's best-run curve if one exists for this seed.
+    currentBestCurve =
+      currentMode === "daily" &&
+      profile.dailyBestCurve &&
+      profile.dailyBestCurve.dateKey === currentDateKey
+        ? profile.dailyBestCurve.curve
+        : null;
     // Daily Challenge: seed from the UTC date so everyone gets the same arena
     // today. Free Play: fresh random seed each run (feels random, like before).
     rng.seed(currentMode === "daily" ? dailySeed() : (Math.random() * 0xffffffff) >>> 0);
@@ -625,6 +639,8 @@ const DB_NAME = "scoreyard-sites-storage";
     game.shake = 0;
     game.flash = 0;
     game.worldTime = 0;
+    game.hitstop = 0;
+    game.paceSamples = [];
     lastFrame = performance.now();
     endGameButton.disabled = false;
     startGameButton.textContent = "Restart run";
@@ -652,6 +668,13 @@ const DB_NAME = "scoreyard-sites-storage";
     });
     profile = result.profile;
     profile.id = PROFILE_ID;
+    // E2: a new daily best becomes the curve future runs chase.
+    if (currentMode === "daily" && result.newDailyBest) {
+      profile = {
+        ...profile,
+        dailyBestCurve: { dateKey: currentDateKey, curve: game.paceSamples.slice() },
+      };
+    }
     try {
       await getStore("profile", "readwrite", store => store.put(profile));
     } catch (error) {
@@ -786,9 +809,27 @@ const DB_NAME = "scoreyard-sites-storage";
     return entries[entries.length - 1][0];
   }
 
+  // Hitstop (E3): briefly freeze game advancement for impact, keep rendering.
+  // Accumulated-time gate, never a busy-wait. Pausing also stops game.elapsed,
+  // so it doesn't shift the seeded spawn schedule.
+  function triggerHitstop(seconds) {
+    game.hitstop = Math.max(game.hitstop, seconds);
+  }
+
   function tick(now) {
-    const dt = Math.min((now - lastFrame) / 1000, 0.035);
+    const realDt = (now - lastFrame) / 1000;
     lastFrame = now;
+
+    if (game.hitstop > 0) {
+      game.hitstop = Math.max(0, game.hitstop - realDt);
+      drawScene(); // hold the frozen frame
+      if (game.status === "playing") {
+        rafId = requestAnimationFrame(tick);
+      }
+      return;
+    }
+
+    const dt = Math.min(realDt, 0.035);
     updateGame(dt);
     drawScene();
 
@@ -800,6 +841,14 @@ const DB_NAME = "scoreyard-sites-storage";
   function updateGame(dt) {
     game.elapsed += dt;
     game.worldTime += dt;
+
+    // E2: record this run's score at each whole second (becomes the best-run
+    // curve if this run sets a new daily best). Keyed by elapsed second, so it
+    // is frame-rate independent.
+    const sec = Math.floor(game.elapsed);
+    if (game.paceSamples[sec] === undefined) {
+      game.paceSamples[sec] = runScore();
+    }
     const scoreMultiplier = game.scoreBoostTimer > 0 ? 2 : 1;
     game.score += dt * (12 + game.combo * 1.5) * scoreMultiplier;
     game.invulnerable = Math.max(0, game.invulnerable - dt);
@@ -1104,6 +1153,7 @@ const DB_NAME = "scoreyard-sites-storage";
 
   function takeHit(hit) {
     audio.sfx.hit();
+    triggerHitstop(0.08); // E3: impact freeze on damage
     if (game.shield > 0) {
       game.shield -= 1;
       game.score += 35;
@@ -1218,10 +1268,12 @@ const DB_NAME = "scoreyard-sites-storage";
     }
 
     game.boss.health -= amount;
+    triggerHitstop(0.05); // E3: punchy freeze on each boss hit
     addFloatingText(`Boss -${amount}`, game.boss.x, game.boss.y - 42, "#e2b93b", 0.82);
 
     if (game.boss.health <= 0) {
       game.score += 1800;
+      triggerHitstop(0.2); // E3: big freeze on the kill
       addFloatingText("Boss broken +1800", canvas.width / 2, 92, "#e2b93b", 1.45);
       spawnBurst(game.boss.x, game.boss.y, "#e2b93b", 58);
       spawnShockwave(game.boss.x, game.boss.y, "#e2b93b", 240, 0.9);
@@ -1305,6 +1357,22 @@ const DB_NAME = "scoreyard-sites-storage";
     timeValue.textContent = String(Math.max(0, Math.ceil(RUN_SECONDS - game.elapsed)));
     comboValue.textContent = `x${Math.max(1, Math.floor(game.combo))}`;
     shieldValue.textContent = String(game.shield);
+
+    if (paceValue) {
+      const delta =
+        currentMode === "daily"
+          ? paceDelta(currentBestCurve, game.elapsed, runScore())
+          : null;
+      if (delta === null) {
+        paceValue.textContent = "—";
+        paceValue.classList.remove("pace-ahead", "pace-behind");
+      } else {
+        // +/- sign carries the meaning (colorblind-safe); color reinforces.
+        paceValue.textContent = `${delta >= 0 ? "+" : "−"}${Math.abs(delta)}`;
+        paceValue.classList.toggle("pace-ahead", delta >= 0);
+        paceValue.classList.toggle("pace-behind", delta < 0);
+      }
+    }
   }
 
   function pulseHud(element) {
