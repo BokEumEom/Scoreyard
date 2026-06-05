@@ -6,6 +6,7 @@
 import * as rng from "./rng.js";
 import { dailySeed, utcDateKey } from "./seed.js";
 import { normalizeProfile, recordRun, todayBest, playedToday } from "./store.js";
+import * as audio from "./audio.js";
 
 const DB_NAME = "scoreyard-sites-storage";
   const DB_VERSION = 2; // v2: profile gains best-score/daily/unlock fields (migration via normalizeProfile on read)
@@ -45,6 +46,7 @@ const DB_NAME = "scoreyard-sites-storage";
   const dailySub = document.getElementById("dailySub");
   const todayBestValue = document.getElementById("todayBestValue");
   const allTimeBestValue = document.getElementById("allTimeBestValue");
+  const muteToggle = document.getElementById("muteToggle");
 
   let dbPromise;
   let profile = {
@@ -302,6 +304,8 @@ const DB_NAME = "scoreyard-sites-storage";
     // normalizeProfile fills v2 fields (best/daily/unlocks) for older records.
     profile = normalizeProfile(saved || profile);
     profile.id = PROFILE_ID;
+    audio.setMuted(profile.muted);
+    updateMuteButton();
     playerNameInput.value = profile.name || "";
     playerEmailInput.value = profile.email || "";
     updateProfileUi();
@@ -340,6 +344,24 @@ const DB_NAME = "scoreyard-sites-storage";
     }
     if (homeStartGameButton) {
       homeStartGameButton.textContent = done ? "↻ Replay today" : "▶ Play today";
+    }
+  }
+
+  function updateMuteButton() {
+    if (!muteToggle) return;
+    muteToggle.textContent = profile.muted ? "♪ off" : "♪ on";
+    muteToggle.setAttribute("aria-pressed", String(!!profile.muted));
+  }
+
+  async function toggleMute() {
+    audio.unlock(); // this click is a user gesture — also unlocks audio
+    profile = { ...profile, muted: !profile.muted };
+    audio.setMuted(profile.muted);
+    updateMuteButton();
+    try {
+      await getStore("profile", "readwrite", store => store.put(profile));
+    } catch (error) {
+      console.error("Failed to save mute:", error);
     }
   }
 
@@ -521,6 +543,8 @@ const DB_NAME = "scoreyard-sites-storage";
     }
 
     await saveProfile();
+    audio.unlock(); // started by a click — unlock/resume the AudioContext now
+    audio.sfx.start();
     currentMode = mode === "daily" ? "daily" : "free";
     currentDateKey = utcDateKey(); // lock at run start (survives midnight rollover mid-run)
     // Daily Challenge: seed from the UTC date so everyone gets the same arena
@@ -593,6 +617,9 @@ const DB_NAME = "scoreyard-sites-storage";
 
     const beatBest =
       currentMode === "daily" ? result.newDailyBest : result.newAllTimeBest;
+    if (beatBest) {
+      audio.sfx.newBest();
+    }
     refreshHome();
     drawScene(beatBest ? "NEW BEST!" : "Run saved");
   }
@@ -927,6 +954,7 @@ const DB_NAME = "scoreyard-sites-storage";
   }
 
   function spawnBoss() {
+    audio.sfx.boss();
     game.bossSpawned = true;
     game.boss = {
       x: canvas.width / 2,
@@ -1018,6 +1046,7 @@ const DB_NAME = "scoreyard-sites-storage";
   }
 
   function takeHit(hit) {
+    audio.sfx.hit();
     if (game.shield > 0) {
       game.shield -= 1;
       game.score += 35;
@@ -1056,6 +1085,7 @@ const DB_NAME = "scoreyard-sites-storage";
   function collectOrb(orb) {
     game.orbCount += 1;
     game.combo = Math.min(9, game.combo + 1);
+    audio.sfx.collect(game.combo);
     game.maxCombo = Math.max(game.maxCombo, game.combo);
     game.comboTimer = 3.2;
     const gain = (45 + game.combo * 28) * (game.scoreBoostTimer > 0 ? 2 : 1);
@@ -1078,6 +1108,7 @@ const DB_NAME = "scoreyard-sites-storage";
   }
 
   function collectPowerUp(powerUp) {
+    audio.sfx.powerup();
     const config = powerUpConfig[powerUp.type];
     const color = config.color;
 
@@ -1864,6 +1895,9 @@ const DB_NAME = "scoreyard-sites-storage";
   homeStartGameButton.addEventListener("click", () => startRun("daily"));
   if (freeStartGameButton) {
     freeStartGameButton.addEventListener("click", () => startRun("free"));
+  }
+  if (muteToggle) {
+    muteToggle.addEventListener("click", toggleMute);
   }
   endGameButton.addEventListener("click", endRun);
   scoreSearch.addEventListener("input", renderScores);

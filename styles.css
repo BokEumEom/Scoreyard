@@ -945,3 +945,32 @@ th {
   border-color: var(--teal-strong);
   color: #fff;
 }
+
+/* Mute toggle — top-right of the arena (seeded-daily, T7) */
+.mute-toggle {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 6;
+  min-width: 44px;
+  min-height: 44px; /* a11y touch target */
+  padding: 0 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(3, 12, 15, 0.6);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.mute-toggle:hover {
+  border-color: var(--teal-strong);
+  color: var(--teal-strong);
+}
+
+.mute-toggle[aria-pressed="true"] {
+  color: var(--coral);
+  border-color: rgba(255, 92, 122, 0.5);
+}
