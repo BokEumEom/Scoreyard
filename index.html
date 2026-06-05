@@ -51,13 +51,28 @@
                 <div class="home-content">
                   <p class="home-kicker">Retro arcade run</p>
                   <h2>Scoreyard</h2>
-                  <p class="home-copy">Collect crystals, chain combos, grab power cores, and break the Core Warden.</p>
-                  <div class="home-chips" aria-label="Game features">
-                    <span>7 power-ups</span>
-                    <span>boss phase</span>
-                    <span>persistent scores</span>
+                  <div class="daily-card">
+                    <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
+                    <p class="daily-sub" id="dailySub">Everyone plays the same arena today.</p>
+                    <div class="daily-stats">
+                      <div class="stat-chip">
+                        <span class="stat-label">Today best</span>
+                        <strong id="todayBestValue">—</strong>
+                      </div>
+                      <div class="stat-chip">
+                        <span class="stat-label">All-time</span>
+                        <strong id="allTimeBestValue">0</strong>
+                      </div>
+                    </div>
+                    <button type="button" class="primary-btn arcade-start" id="homeStartGame">▶ Play today</button>
                   </div>
-                  <button type="button" class="primary-btn arcade-start" id="homeStartGame">Insert coin / start</button>
+                  <div class="freeplay-row">
+                    <div class="freeplay-copy">
+                      <strong>Free Play</strong>
+                      <span>unlimited practice · random arena</span>
+                    </div>
+                    <button type="button" class="ghost-btn" id="freeStartGame">Start</button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -4,9 +4,11 @@
 // screen-shake) and makeId stay on Math.random. seed.js (UTC daily seed) is
 // wired in when the Daily Challenge UI lands.
 import * as rng from "./rng.js";
+import { dailySeed, utcDateKey } from "./seed.js";
+import { normalizeProfile, recordRun, todayBest, playedToday } from "./store.js";
 
 const DB_NAME = "scoreyard-sites-storage";
-  const DB_VERSION = 1;
+  const DB_VERSION = 2; // v2: profile gains best-score/daily/unlock fields (migration via normalizeProfile on read)
   const PROFILE_ID = "workspace-player";
   const RUN_SECONDS = 75;
   const BOSS_START_SECONDS = 52;
@@ -31,12 +33,18 @@ const DB_NAME = "scoreyard-sites-storage";
   const startGameButton = document.getElementById("startGame");
   const homeScreen = document.getElementById("homeScreen");
   const homeStartGameButton = document.getElementById("homeStartGame");
+  const freeStartGameButton = document.getElementById("freeStartGame");
   const endGameButton = document.getElementById("endGame");
   const scoreRows = document.getElementById("scoreRows");
   const scoreSearch = document.getElementById("scoreSearch");
   const scoreFilter = document.getElementById("scoreFilter");
   const emptyState = document.getElementById("emptyState");
   const scoreRowTemplate = document.getElementById("scoreRowTemplate");
+  const dailyTag = document.getElementById("dailyTag");
+  const dailySeedLabel = document.getElementById("dailySeedLabel");
+  const dailySub = document.getElementById("dailySub");
+  const todayBestValue = document.getElementById("todayBestValue");
+  const allTimeBestValue = document.getElementById("allTimeBestValue");
 
   let dbPromise;
   let profile = {
@@ -46,6 +54,8 @@ const DB_NAME = "scoreyard-sites-storage";
     avatar: ""
   };
   let scores = [];
+  let currentMode = "free"; // "daily" | "free" — locked at run start
+  let currentDateKey = null; // UTC YYYY-MM-DD locked at run start (for daily best)
   let avatarImage = new Image();
   let lastFrame = 0;
   let rafId = 0;
@@ -289,10 +299,48 @@ const DB_NAME = "scoreyard-sites-storage";
 
   async function loadProfile() {
     const saved = await getStore("profile", "readonly", store => store.get(PROFILE_ID));
-    profile = saved || profile;
+    // normalizeProfile fills v2 fields (best/daily/unlocks) for older records.
+    profile = normalizeProfile(saved || profile);
+    profile.id = PROFILE_ID;
     playerNameInput.value = profile.name || "";
     playerEmailInput.value = profile.email || "";
     updateProfileUi();
+  }
+
+  // Final score for a run (leaderboard record AND best-tracking use this).
+  function runScore() {
+    return Math.max(0, Math.round(game.score + game.health * 100));
+  }
+
+  // Populate the home-screen Daily card from the current profile. textContent
+  // only (no innerHTML) — values are a UTC date string and integers, but we
+  // keep the DOM API safe regardless.
+  function refreshHome() {
+    const key = utcDateKey();
+    const best = todayBest(profile, key);
+    const done = playedToday(profile, key);
+    if (dailySeedLabel) {
+      dailySeedLabel.textContent = key;
+    }
+    if (allTimeBestValue) {
+      allTimeBestValue.textContent = String(profile.allTimeBest || 0);
+    }
+    if (todayBestValue) {
+      todayBestValue.textContent = done ? String(best) : "—";
+    }
+    if (dailyTag) {
+      dailyTag.textContent = done
+        ? `✓ Played today · best ${best}`
+        : `★ Today's Challenge · ${key}`;
+    }
+    if (dailySub) {
+      dailySub.textContent = done
+        ? "Beat it, or jump into Free Play."
+        : "Everyone plays the same arena today.";
+    }
+    if (homeStartGameButton) {
+      homeStartGameButton.textContent = done ? "↻ Replay today" : "▶ Play today";
+    }
   }
 
   async function saveProfile() {
@@ -328,7 +376,7 @@ const DB_NAME = "scoreyard-sites-storage";
       playerName: profile.name,
       playerEmail: profile.email,
       avatar: profile.avatar || "",
-      score: Math.max(0, Math.round(game.score + game.health * 100)),
+      score: runScore(),
       orbs: game.orbCount,
       maxCombo: game.maxCombo,
       seconds: Math.round(game.elapsed),
@@ -467,16 +515,17 @@ const DB_NAME = "scoreyard-sites-storage";
     drawScene();
   }
 
-  async function startRun() {
+  async function startRun(mode) {
     if (!profileForm.reportValidity()) {
       return;
     }
 
     await saveProfile();
-    // Seed the run's gameplay RNG. Free Play uses a fresh random seed each run
-    // (feels random, like before). The Daily Challenge will seed with
-    // dailySeed(seed.js) so everyone gets the same arena on a given UTC day.
-    rng.seed((Math.random() * 0xffffffff) >>> 0);
+    currentMode = mode === "daily" ? "daily" : "free";
+    currentDateKey = utcDateKey(); // lock at run start (survives midnight rollover mid-run)
+    // Daily Challenge: seed from the UTC date so everyone gets the same arena
+    // today. Free Play: fresh random seed each run (feels random, like before).
+    rng.seed(currentMode === "daily" ? dailySeed() : (Math.random() * 0xffffffff) >>> 0);
     game.status = "playing";
     game.player.x = canvas.width / 2;
     game.player.y = canvas.height / 2;
@@ -524,8 +573,28 @@ const DB_NAME = "scoreyard-sites-storage";
     game.status = "done";
     endGameButton.disabled = true;
     cancelAnimationFrame(rafId);
+
+    const finalScore = runScore();
     await saveScore();
-    drawScene("Run saved");
+
+    // Update local bests (works even for guest players — best is local-only).
+    const result = recordRun(profile, {
+      mode: currentMode,
+      dateKey: currentDateKey,
+      score: finalScore,
+    });
+    profile = result.profile;
+    profile.id = PROFILE_ID;
+    try {
+      await getStore("profile", "readwrite", store => store.put(profile));
+    } catch (error) {
+      console.error("Failed to save bests:", error);
+    }
+
+    const beatBest =
+      currentMode === "daily" ? result.newDailyBest : result.newAllTimeBest;
+    refreshHome();
+    drawScene(beatBest ? "NEW BEST!" : "Run saved");
   }
 
   function makeOrb() {
@@ -1791,8 +1860,11 @@ const DB_NAME = "scoreyard-sites-storage";
     }
   });
 
-  startGameButton.addEventListener("click", startRun);
-  homeStartGameButton.addEventListener("click", startRun);
+  startGameButton.addEventListener("click", () => startRun("free"));
+  homeStartGameButton.addEventListener("click", () => startRun("daily"));
+  if (freeStartGameButton) {
+    freeStartGameButton.addEventListener("click", () => startRun("free"));
+  }
   endGameButton.addEventListener("click", endRun);
   scoreSearch.addEventListener("input", renderScores);
   scoreFilter.addEventListener("change", renderScores);
@@ -1845,6 +1917,7 @@ const DB_NAME = "scoreyard-sites-storage";
     await loadProfile();
     await loadScores();
     resetGame();
+    refreshHome();
   }
 
   init().catch(error => {
