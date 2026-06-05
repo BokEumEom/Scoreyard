@@ -7,6 +7,7 @@ import * as rng from "./rng.js";
 import { dailySeed, utcDateKey } from "./seed.js";
 import { normalizeProfile, recordRun, todayBest, playedToday } from "./store.js";
 import * as audio from "./audio.js";
+import { buildShareString } from "./share.js";
 
 const DB_NAME = "scoreyard-sites-storage";
   const DB_VERSION = 2; // v2: profile gains best-score/daily/unlock fields (migration via normalizeProfile on read)
@@ -47,6 +48,7 @@ const DB_NAME = "scoreyard-sites-storage";
   const todayBestValue = document.getElementById("todayBestValue");
   const allTimeBestValue = document.getElementById("allTimeBestValue");
   const muteToggle = document.getElementById("muteToggle");
+  const shareResultButton = document.getElementById("shareResult");
 
   let dbPromise;
   let profile = {
@@ -58,6 +60,7 @@ const DB_NAME = "scoreyard-sites-storage";
   let scores = [];
   let currentMode = "free"; // "daily" | "free" — locked at run start
   let currentDateKey = null; // UTC YYYY-MM-DD locked at run start (for daily best)
+  let lastResult = null; // last finished run's stats (for the share string)
   let avatarImage = new Image();
   let lastFrame = 0;
   let rafId = 0;
@@ -365,6 +368,43 @@ const DB_NAME = "scoreyard-sites-storage";
     }
   }
 
+  // Copy the last daily run's shareable result (no PII — see share.js).
+  async function copyShare() {
+    if (!lastResult || !shareResultButton) {
+      return;
+    }
+    const text = buildShareString(lastResult);
+    let ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch (error) {
+      ok = false;
+    }
+    if (!ok) {
+      // Fallback for non-secure contexts / older browsers.
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch (error) {
+        ok = false;
+      }
+    }
+    shareResultButton.textContent = ok ? "✓ Copied!" : "⧉ Copy failed";
+    setTimeout(() => {
+      shareResultButton.textContent = "⧉ Copy result";
+    }, 2000);
+  }
+
   async function saveProfile() {
     const cleanName = playerNameInput.value.trim();
     const cleanEmail = playerEmailInput.value.trim().toLowerCase();
@@ -545,6 +585,9 @@ const DB_NAME = "scoreyard-sites-storage";
     await saveProfile();
     audio.unlock(); // started by a click — unlock/resume the AudioContext now
     audio.sfx.start();
+    if (shareResultButton) {
+      shareResultButton.hidden = true;
+    }
     currentMode = mode === "daily" ? "daily" : "free";
     currentDateKey = utcDateKey(); // lock at run start (survives midnight rollover mid-run)
     // Daily Challenge: seed from the UTC date so everyone gets the same arena
@@ -620,6 +663,20 @@ const DB_NAME = "scoreyard-sites-storage";
     if (beatBest) {
       audio.sfx.newBest();
     }
+
+    // Stash this run's stats for the share string (daily runs only; no PII).
+    lastResult = {
+      dateKey: currentDateKey,
+      score: finalScore,
+      maxCombo: game.maxCombo,
+      orbs: game.orbCount,
+      beatBest,
+    };
+    if (shareResultButton) {
+      shareResultButton.hidden = currentMode !== "daily";
+      shareResultButton.textContent = "⧉ Copy result";
+    }
+
     refreshHome();
     drawScene(beatBest ? "NEW BEST!" : "Run saved");
   }
@@ -1898,6 +1955,9 @@ const DB_NAME = "scoreyard-sites-storage";
   }
   if (muteToggle) {
     muteToggle.addEventListener("click", toggleMute);
+  }
+  if (shareResultButton) {
+    shareResultButton.addEventListener("click", copyShare);
   }
   endGameButton.addEventListener("click", endRun);
   scoreSearch.addEventListener("input", renderScores);
