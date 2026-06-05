@@ -1,0 +1,10 @@
+{
+  "name": "scoreyard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static browser arcade game. No build, no runtime dependencies. package.json exists only so `node --test` runs the pure-module unit tests as ES modules.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
