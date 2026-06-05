@@ -1,7 +1,11 @@
-(function () {
-  "use strict";
+// app.js — Scoreyard game (ES module).
+// Gameplay randomness routes through the seeded rng (rng.js) so the Daily
+// Challenge can be deterministic; cosmetic randomness (stars, death particles,
+// screen-shake) and makeId stay on Math.random. seed.js (UTC daily seed) is
+// wired in when the Daily Challenge UI lands.
+import * as rng from "./rng.js";
 
-  const DB_NAME = "scoreyard-sites-storage";
+const DB_NAME = "scoreyard-sites-storage";
   const DB_VERSION = 1;
   const PROFILE_ID = "workspace-player";
   const RUN_SECONDS = 75;
@@ -469,6 +473,10 @@
     }
 
     await saveProfile();
+    // Seed the run's gameplay RNG. Free Play uses a fresh random seed each run
+    // (feels random, like before). The Daily Challenge will seed with
+    // dailySeed(seed.js) so everyone gets the same arena on a given UTC day.
+    rng.seed((Math.random() * 0xffffffff) >>> 0);
     game.status = "playing";
     game.player.x = canvas.width / 2;
     game.player.y = canvas.height / 2;
@@ -522,11 +530,11 @@
 
   function makeOrb() {
     return {
-      x: 28 + Math.random() * (canvas.width - 56),
-      y: 28 + Math.random() * (canvas.height - 56),
-      r: 10 + Math.random() * 4,
-      phase: Math.random() * Math.PI * 2,
-      rotSpeed: 1.8 + Math.random() * 1.8
+      x: rng.range(28, canvas.width - 28),
+      y: rng.range(28, canvas.height - 28),
+      r: rng.range(10, 14),
+      phase: rng.range(0, Math.PI * 2),
+      rotSpeed: rng.range(1.8, 3.6)
     };
   }
 
@@ -536,7 +544,7 @@
     }
 
     if (game.elapsed < 30) {
-      return Math.random() < 0.48 ? "chaser" : "mine";
+      return rng.next() < 0.48 ? "chaser" : "mine";
     }
 
     if (game.elapsed < BOSS_START_SECONDS) {
@@ -558,22 +566,22 @@
 
   function makeHazard(type) {
     const enemyType = type || chooseEnemyType();
-    const speed = enemyType === "chaser" ? 80 + Math.random() * 45 : 95 + Math.random() * 95;
-    const angle = Math.random() * Math.PI * 2;
+    const speed = enemyType === "chaser" ? rng.range(80, 125) : rng.range(95, 190);
+    const angle = rng.range(0, Math.PI * 2);
     const hazard = {
       type: enemyType,
-      x: 32 + Math.random() * (canvas.width - 64),
-      y: 32 + Math.random() * (canvas.height - 64),
-      r: enemyType === "dasher" ? 18 : 14 + Math.random() * 8,
+      x: rng.range(32, canvas.width - 32),
+      y: rng.range(32, canvas.height - 32),
+      r: enemyType === "dasher" ? 18 : rng.range(14, 22),
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
-      spin: (Math.random() > 0.5 ? 1 : -1) * (1.4 + Math.random() * 1.8),
-      angle: Math.random() * Math.PI * 2,
-      timer: enemyType === "dasher" ? 0.8 + Math.random() * 0.7 : 0,
+      spin: (rng.next() > 0.5 ? 1 : -1) * rng.range(1.4, 3.2),
+      angle: rng.range(0, Math.PI * 2),
+      timer: enemyType === "dasher" ? rng.range(0.8, 1.5) : 0,
       mode: enemyType === "dasher" ? "windup" : "move",
-      orbitAngle: Math.random() * Math.PI * 2,
-      orbitRadius: 110 + Math.random() * 130,
-      orbitSpeed: (Math.random() > 0.5 ? 1 : -1) * (0.72 + Math.random() * 0.55),
+      orbitAngle: rng.range(0, Math.PI * 2),
+      orbitRadius: rng.range(110, 240),
+      orbitSpeed: (rng.next() > 0.5 ? 1 : -1) * rng.range(0.72, 1.27),
       centerX: canvas.width / 2,
       centerY: canvas.height / 2
     };
@@ -591,10 +599,10 @@
 
     return {
       type: powerType,
-      x: 38 + Math.random() * (canvas.width - 76),
-      y: 38 + Math.random() * (canvas.height - 76),
+      x: rng.range(38, canvas.width - 38),
+      y: rng.range(38, canvas.height - 38),
       r: powerType === "bomb" ? 17 : 15,
-      phase: Math.random() * Math.PI * 2
+      phase: rng.range(0, Math.PI * 2)
     };
   }
 
@@ -612,7 +620,7 @@
 
   function weightedPick(entries) {
     const total = entries.reduce((sum, entry) => sum + entry[1], 0);
-    let roll = Math.random() * total;
+    let roll = rng.next() * total;
 
     for (const [value, weight] of entries) {
       roll -= weight;
@@ -718,7 +726,7 @@
 
     if (game.elapsed >= game.nextPowerUpAt && game.powerUps.length < 3) {
       game.powerUps.push(makePowerUp());
-      game.nextPowerUpAt += 6 + Math.random() * 4;
+      game.nextPowerUpAt += rng.range(6, 10);
     }
 
     game.powerUps = game.powerUps.filter(powerUp => {
@@ -808,6 +816,10 @@
       }
     } else if (hazard.timer <= 0) {
       hazard.mode = "windup";
+      // Intentionally Math.random, NOT seeded rng: this reset fires per-frame
+      // (timer-driven), so seeding it would couple the seed stream to frame
+      // rate and desync every other spawn's determinism. Behavior timer, not
+      // spawn sequence — must stay non-deterministic. (Eng review Decision §4.)
       hazard.timer = 0.82 + Math.random() * 0.45;
     }
 
@@ -1839,4 +1851,3 @@
     storageStatus.textContent = "Unable to start";
     console.error(error);
   });
-})();
