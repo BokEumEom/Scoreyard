@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(plan-design-review)",
+      "Bash(sed -n '1,14p' app.js)",
+      "Bash(sed -n '1840,1850p' app.js)",
+      "Bash(sed -n '10,13p' app.js)",
+      "Bash(node --check app.js)",
+      "Bash(git -c core.hooksPath=/dev/null commit -q -m 'refactor: app.js to ES module + wire seeded rng into gameplay *)",
+      "Bash(curl -s -o /dev/null -w \"index.html -> HTTP %{http_code}\\\\n\" http://127.0.0.1:51873/)",
+      "Bash(curl -s -o /dev/null -w \"app.js -> HTTP %{http_code}\\\\n\" http://127.0.0.1:51873/app.js)",
+      "Bash(curl -s -o /dev/null -w \"rng.js -> HTTP %{http_code}\\\\n\" http://127.0.0.1:51873/rng.js)",
+      "Bash(curl -s -o /dev/null -w \"seed.js -> HTTP %{http_code}\\\\n\" http://127.0.0.1:51873/seed.js)",
+      "Bash(netstat -tln)",
+      "Bash(awk '{print $1}')",
+      "Bash(node --test test/rng.test.js test/seed.test.js test/store.test.js)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://127.0.0.1:51873/)",
+      "Bash(curl -s -o /dev/null -w \"store.js HTTP %{http_code}\\\\n\" http://127.0.0.1:51873/store.js)",
+      "Bash(git -c core.hooksPath=/dev/null commit -q -m 'feat: Daily Challenge mode + best tracking + home IA *)",
+      "Bash(git -c core.hooksPath=/dev/null commit -q -m 'feat: synthesized WebAudio SFX + mute toggle \\(T7\\) *)",
+      "Bash(node --test test/rng.test.js test/seed.test.js test/store.test.js test/share.test.js)",
+      "Bash(node --check share.js)",
+      "Bash(git -c core.hooksPath=/dev/null commit -q -m 'feat: shareable daily result string with PII guard \\(T9/E1\\) *)",
+      "Bash(node --test test/*.test.js)",
+      "Bash(node --test test/rng.test.js test/seed.test.js test/store.test.js test/share.test.js test/pace.test.js)",
+      "Bash(node --check pace.js)",
+      "Bash(git -c core.hooksPath=/dev/null commit -q -m 'feat: best-pace HUD + hitstop game-feel \\(T10/E2, T11/E3\\) *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:51873/)",
+      "Bash(echo \"server still up: $\\(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:51873/\\)\")",
+      "Bash(curl -s http://127.0.0.1:51873/)",
+      "Bash(echo \"served index has module tag: $\\(curl -s http://127.0.0.1:51873/)",
+      "Bash(git -c core.hooksPath=/dev/null commit -q -m 'docs: rewrite README in Korean for the seeded-daily features *)"
+    ]
+  }
+}
