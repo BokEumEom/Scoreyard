@@ -26,11 +26,12 @@ import { clamp, distance, distanceToSegment, formatDate } from "./util/mathx.js"
 import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
 import { enemyConfig } from "./data/enemies.js";
 import { acquireTarget, fireInterval, boltDamage, createBolt } from "./game/weapons.js";
+import { canvas, ctx } from "./core/dom.js";
+import { game } from "./game/state.js";
+import { assets, setRedraw } from "./render/assets.js";
 
 const FIRE_RANGE = 320; // px: auto-aim acquisition radius
 const BOLT_SPEED = 560; // px/s: bolt travel speed
-const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
   const profileForm = document.getElementById("profileForm");
   const playerNameInput = document.getElementById("playerName");
   const playerEmailInput = document.getElementById("playerEmail");
@@ -80,7 +81,6 @@ const canvas = document.getElementById("gameCanvas");
   let lastFrame = 0;
   let rafId = 0;
   let keys = new Set();
-  let assets;
   const stars = Array.from({ length: 86 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
@@ -89,76 +89,10 @@ const canvas = document.getElementById("gameCanvas");
     alpha: 0.2 + Math.random() * 0.58
   }));
 
-  const game = {
-    status: "idle",
-    player: { x: 360, y: 230, r: 16, speed: 270 },
-    playerVariant: 0,
-    backdropVariant: 0,
-    bossVariant: 0,
-    arenaProps: [],
-    hazards: [],
-    orbs: [],
-    powerUps: [],
-    lasers: [],
-    bolts: [],
-    fireTimer: 0,
-    fx: [],
-    particles: [],
-    shockwaves: [],
-    floatingTexts: [],
-    boss: null,
-    bossSpawned: false,
-    score: 0,
-    orbCount: 0,
-    health: 3,
-    shield: 0,
-    magnetTimer: 0,
-    scoreBoostTimer: 0,
-    phaseTimer: 0,
-    combo: 1,
-    maxCombo: 1,
-    comboTimer: 0,
-    elapsed: 0,
-    invulnerable: 0,
-    nextPowerUpAt: 5,
-    nextHazardAt: 10,
-    inputX: 0,
-    inputY: 0,
-    pointerActive: false,
-    pointerX: 360,
-    pointerY: 230,
-    shake: 0,
-    flash: 0,
-    worldTime: 0,
-    hitstop: 0, // seconds of frame-freeze remaining (E3)
-    paceSamples: [] // score at end of each whole second this run (E2)
-  };
-
-  assets = {
-    backdrop: loadImage("assets/arena-backdrop.png"),
-    backdrops: [
-      loadImage("assets/arena-backdrop.png"),
-      loadImage("assets/arena-backdrop-nebula.png"),
-      loadImage("assets/arena-backdrop-station.png"),
-      loadImage("assets/arena-backdrop-solar.png"),
-    ],
-    boss: loadImage("assets/boss-core.png"),
-    bossVariants: loadImage("assets/boss-variants.png"),
-    arenaProps: loadImage("assets/arena-props.png"),
-    enemies: loadImage("assets/enemies.png"),
-    player: loadImage("assets/player-drone.png"),
-    powerups: loadImage("assets/powerups.png"),
-    sprites: loadImage("assets/sprites.png"),
-    variety: loadImage("assets/variety-atlas.png"),
-    combatFx: loadImage("assets/combat-fx.png")
-  };
-
-  function loadImage(src) {
-    const image = new Image();
-    image.onload = () => drawScene();
-    image.src = src;
-    return image;
-  }
+  // canvas/ctx, the game state object, and image assets now live in
+  // ./core/dom.js, ./game/state.js, and ./render/assets.js (imported above).
+  // setRedraw lets asset loads repaint without assets.js importing the renderer.
+  setRedraw(drawScene);
 
   function imageReady(image) {
     return image.complete && image.naturalWidth > 0;
