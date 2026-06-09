@@ -67,11 +67,22 @@ http://127.0.0.1:51873/
 생성된 이미지 자산입니다. 각 스프라이트에는 투명 처리 전의 크로마키 원본(`*-source-magenta.png`)이 함께 보존돼 있습니다.
 
 - `arena-backdrop.png` — 아레나 배경
+- `arena-backdrop-nebula.png` — 청록 성운 안개 아레나 배경
+- `arena-backdrop-station.png` — 어두운 잔해·광석 아레나 배경
+- `arena-backdrop-solar.png` — 골드 에너지 먼지 아레나 배경
 - `player-drone.png` — 플레이어 드론
 - `enemies.png` — 적 스프라이트 시트(체이서·대셔·오비터·센티넬)
 - `boss-core.png` — Core Warden 보스
+- `boss-variants.png` — 생성형 2x2 Core Warden 보스 변형 아틀라스
+- `boss-variants-source-magenta.png` — `boss-variants.png` 투명 처리 전 크로마키 원본
+- `arena-props.png` — 생성형 4x3 장식 아레나 소품 아틀라스
+- `arena-props-source-magenta.png` — `arena-props.png` 투명 처리 전 크로마키 원본
+- `combat-fx.png` — v2 전투용 4x3 볼트·피격·쉴드·미니오브 이펙트 아틀라스
+- `combat-fx-source-magenta.png` — `combat-fx.png` 투명 처리 전 크로마키 원본
 - `powerups.png` — 파워업 스프라이트 시트
 - `sprites.png` — 크리스털·실드·해저드·스파클 시트
+- `variety-atlas.png` — 플레이어·크리스털·적·파워업 변형 스프라이트 아틀라스
+- `variety-atlas-source-magenta.png` — `variety-atlas.png` 투명 처리 전 크로마키 원본
 - `retro-home-frame.png` — 레트로 홈 프레임
 
 ## 게임플레이
