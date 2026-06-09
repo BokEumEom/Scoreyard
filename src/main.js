@@ -23,7 +23,11 @@ import {
 } from "./data/sprites.js";
 import { clamp, distance, distanceToSegment, formatDate } from "./util/mathx.js";
 import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
+import { enemyConfig } from "./data/enemies.js";
+import { acquireTarget, fireInterval, boltDamage, createBolt } from "./game/weapons.js";
 
+const FIRE_RANGE = 320; // px: auto-aim acquisition radius
+const BOLT_SPEED = 560; // px/s: bolt travel speed
 const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
   const profileForm = document.getElementById("profileForm");
@@ -95,6 +99,8 @@ const canvas = document.getElementById("gameCanvas");
     orbs: [],
     powerUps: [],
     lasers: [],
+    bolts: [],
+    fireTimer: 0,
     particles: [],
     shockwaves: [],
     floatingTexts: [],
@@ -480,6 +486,8 @@ const canvas = document.getElementById("gameCanvas");
     game.orbs = [];
     game.powerUps = [];
     game.lasers = [];
+    game.bolts = [];
+    game.fireTimer = 0;
     game.particles = [];
     game.shockwaves = [];
     game.floatingTexts = [];
@@ -554,6 +562,8 @@ const canvas = document.getElementById("gameCanvas");
     game.orbs = Array.from({ length: 6 }, makeOrb);
     game.powerUps = [makePowerUp("shield"), makePowerUp("magnet")];
     game.lasers = [];
+    game.bolts = [];
+    game.fireTimer = 0;
     game.particles = [];
     game.shockwaves = [];
     game.floatingTexts = [];
@@ -711,7 +721,8 @@ const canvas = document.getElementById("gameCanvas");
       orbitSpeed: (rng.next() > 0.5 ? 1 : -1) * rng.range(0.72, 1.27),
       centerX: canvas.width / 2,
       centerY: canvas.height / 2,
-      variant: chooseEnemyVariant(enemyType)
+      variant: chooseEnemyVariant(enemyType),
+      hp: enemyConfig(enemyType).hp
     };
 
     if (enemyType === "orbiter") {
@@ -767,6 +778,54 @@ const canvas = document.getElementById("gameCanvas");
   // so it doesn't shift the seeded spawn schedule.
   function triggerHitstop(seconds) {
     game.hitstop = Math.max(game.hitstop, seconds);
+  }
+
+  // Auto-aim combat. Consumes NO seeded rng (determinism): targeting/bolt math is
+  // pure; impact particles use Math.random (cosmetic). See the determinism contract.
+  function updateWeapons(dt) {
+    game.fireTimer = Math.max(0, game.fireTimer - dt);
+
+    const target = acquireTarget(game.player, game.hazards, FIRE_RANGE);
+    if (target && game.fireTimer <= 0) {
+      game.bolts.push(createBolt(game.player, target, BOLT_SPEED, boltDamage(game.combo)));
+      game.fireTimer = fireInterval(game.combo);
+    }
+
+    game.bolts = game.bolts.filter(bolt => {
+      bolt.x += bolt.vx * dt;
+      bolt.y += bolt.vy * dt;
+      bolt.life -= dt;
+
+      if (bolt.life <= 0 ||
+          bolt.x < -20 || bolt.x > canvas.width + 20 ||
+          bolt.y < -20 || bolt.y > canvas.height + 20) {
+        return false;
+      }
+
+      const hazard = game.hazards.find(
+        h => Math.hypot(h.x - bolt.x, h.y - bolt.y) < h.r + bolt.r
+      );
+      if (hazard) {
+        hazard.hp -= bolt.damage;
+        spawnBurst(bolt.x, bolt.y, "#8ad7ff", 6);
+        if (hazard.hp <= 0) {
+          killEnemy(hazard);
+        }
+        return false;
+      }
+
+      return true;
+    });
+
+    game.hazards = game.hazards.filter(h => h.hp > 0);
+  }
+
+  function killEnemy(hazard) {
+    const reward = enemyConfig(hazard.type).reward;
+    game.score += reward;
+    spawnBurst(hazard.x, hazard.y, "#ffd166", 16);
+    spawnShockwave(hazard.x, hazard.y, "#ef5a5f", 70, 0.4);
+    addFloatingText(`+${reward}`, hazard.x, hazard.y - 18, "#ffd166", 0.9);
   }
 
   function tick(now) {
@@ -856,6 +915,8 @@ const canvas = document.getElementById("gameCanvas");
       game.nextHazardAt += game.elapsed < BOSS_START_SECONDS ? 7 : 4.8;
       addFloatingText("New enemy", canvas.width / 2, 64, "#ef5a5f");
     }
+
+    updateWeapons(dt);
 
     if (!game.bossSpawned && game.elapsed >= BOSS_START_SECONDS) {
       spawnBoss();
@@ -1336,6 +1397,7 @@ const canvas = document.getElementById("gameCanvas");
     game.powerUps.forEach(drawPowerUp);
     drawLasers();
     game.hazards.forEach(drawHazard);
+    drawBolts();
     drawBoss();
     drawShockwaves();
     drawParticles();
@@ -1819,6 +1881,22 @@ const canvas = document.getElementById("gameCanvas");
 
       ctx.restore();
     });
+  }
+
+  function drawBolts() {
+    if (game.bolts.length === 0) {
+      return;
+    }
+    ctx.save();
+    ctx.fillStyle = "#8ad7ff";
+    ctx.shadowColor = "#8ad7ff";
+    ctx.shadowBlur = 8;
+    game.bolts.forEach(bolt => {
+      ctx.beginPath();
+      ctx.arc(bolt.x, bolt.y, bolt.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
   }
 
   function drawBoss() {
