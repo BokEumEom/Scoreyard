@@ -4,20 +4,27 @@
 // screen-shake) and makeId stay on Math.random. seed.js (UTC daily seed) is
 // wired in when the Daily Challenge UI lands.
 import * as rng from "./rng.js";
-import { dailySeed, utcDateKey } from "./seed.js";
+import { hashSeed, utcDateKey } from "./seed.js";
 import { normalizeProfile, recordRun, todayBest, playedToday } from "./store.js";
 import * as audio from "./audio.js";
 import { buildShareString } from "./share.js";
 import { paceDelta } from "./pace.js";
+import { PROFILE_ID, RUN_SECONDS, BOSS_START_SECONDS, MAX_HEALTH } from "./config.js";
+import { openDb, getStore, makeId } from "./db.js";
+import {
+  spriteFrames,
+  powerUpFrames,
+  enemyFrames,
+  varietyFrames,
+  bossVariantFrames,
+  arenaPropFrames,
+  powerUpConfig,
+  varietyPowerUpFrame
+} from "./sprites.js";
+import { clamp, distance, distanceToSegment, formatDate } from "./mathx.js";
+import { makeAvatarDataUrl, compressAvatar } from "./avatar.js";
 
-const DB_NAME = "scoreyard-sites-storage";
-  const DB_VERSION = 2; // v2: profile gains best-score/daily/unlock fields (migration via normalizeProfile on read)
-  const PROFILE_ID = "workspace-player";
-  const RUN_SECONDS = 75;
-  const BOSS_START_SECONDS = 52;
-  const MAX_HEALTH = 4;
-
-  const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
   const profileForm = document.getElementById("profileForm");
   const playerNameInput = document.getElementById("playerName");
@@ -52,7 +59,6 @@ const DB_NAME = "scoreyard-sites-storage";
   const muteToggle = document.getElementById("muteToggle");
   const shareResultButton = document.getElementById("shareResult");
 
-  let dbPromise;
   let profile = {
     id: PROFILE_ID,
     name: "",
@@ -62,6 +68,7 @@ const DB_NAME = "scoreyard-sites-storage";
   let scores = [];
   let currentMode = "free"; // "daily" | "free" — locked at run start
   let currentDateKey = null; // UTC YYYY-MM-DD locked at run start (for daily best)
+  let currentVisualKey = "idle"; // cosmetic-only seed key; does not consume gameplay rng
   let lastResult = null; // last finished run's stats (for the share string)
   let currentBestCurve = null; // best-run score-by-second curve for the active daily
   let avatarImage = new Image();
@@ -69,38 +76,6 @@ const DB_NAME = "scoreyard-sites-storage";
   let rafId = 0;
   let keys = new Set();
   let assets;
-  const spriteFrames = {
-    crystal: { col: 0, row: 0 },
-    shield: { col: 1, row: 0 },
-    hazard: { col: 0, row: 1 },
-    sparkle: { col: 1, row: 1 }
-  };
-  const powerUpFrames = {
-    shield: { col: 0, row: 0 },
-    magnet: { col: 1, row: 0 },
-    time: { col: 2, row: 0 },
-    repair: { col: 3, row: 0 },
-    bomb: { col: 0, row: 1 },
-    boost: { col: 1, row: 1 },
-    phase: { col: 2, row: 1 },
-    overdrive: { col: 3, row: 1 }
-  };
-  const enemyFrames = {
-    chaser: { col: 1, row: 0 },
-    dasher: { col: 2, row: 0 },
-    orbiter: { col: 0, row: 1 },
-    laser: { col: 1, row: 1 },
-    sentinel: { col: 2, row: 1 }
-  };
-  const powerUpConfig = {
-    shield: { label: "SHIELD", color: "#49b6ff", text: "+Shield" },
-    magnet: { label: "MAGNET", color: "#b76cff", text: "Magnet 6s" },
-    time: { label: "TIME", color: "#e2b93b", text: "+5s" },
-    repair: { label: "REPAIR", color: "#2cf28f", text: "+Health" },
-    bomb: { label: "PULSE", color: "#ff7a45", text: "Pulse bomb" },
-    boost: { label: "BOOST", color: "#f7d64a", text: "Score boost" },
-    phase: { label: "PHASE", color: "#8ad7ff", text: "Phase 4s" }
-  };
   const stars = Array.from({ length: 86 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
@@ -112,6 +87,10 @@ const DB_NAME = "scoreyard-sites-storage";
   const game = {
     status: "idle",
     player: { x: 360, y: 230, r: 16, speed: 270 },
+    playerVariant: 0,
+    backdropVariant: 0,
+    bossVariant: 0,
+    arenaProps: [],
     hazards: [],
     orbs: [],
     powerUps: [],
@@ -149,63 +128,21 @@ const DB_NAME = "scoreyard-sites-storage";
 
   assets = {
     backdrop: loadImage("assets/arena-backdrop.png"),
+    backdrops: [
+      loadImage("assets/arena-backdrop.png"),
+      loadImage("assets/arena-backdrop-nebula.png"),
+      loadImage("assets/arena-backdrop-station.png"),
+      loadImage("assets/arena-backdrop-solar.png"),
+    ],
     boss: loadImage("assets/boss-core.png"),
+    bossVariants: loadImage("assets/boss-variants.png"),
+    arenaProps: loadImage("assets/arena-props.png"),
     enemies: loadImage("assets/enemies.png"),
     player: loadImage("assets/player-drone.png"),
     powerups: loadImage("assets/powerups.png"),
-    sprites: loadImage("assets/sprites.png")
+    sprites: loadImage("assets/sprites.png"),
+    variety: loadImage("assets/variety-atlas.png")
   };
-
-  function openDb() {
-    if (dbPromise) {
-      return dbPromise;
-    }
-
-    dbPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-      request.onupgradeneeded = () => {
-        const db = request.result;
-
-        if (!db.objectStoreNames.contains("profile")) {
-          db.createObjectStore("profile", { keyPath: "id" });
-        }
-
-        if (!db.objectStoreNames.contains("scores")) {
-          const scoreStore = db.createObjectStore("scores", { keyPath: "id" });
-          scoreStore.createIndex("createdAt", "createdAt");
-          scoreStore.createIndex("playerEmail", "playerEmail");
-        }
-      };
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-
-    return dbPromise;
-  }
-
-  async function getStore(storeName, mode, callback) {
-    const db = await openDb();
-
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, mode);
-      const store = tx.objectStore(storeName);
-      const request = callback(store);
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  function makeId() {
-    if (crypto && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-
-    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  }
 
   function loadImage(src) {
     const image = new Image();
@@ -285,6 +222,68 @@ const DB_NAME = "scoreyard-sites-storage";
     );
     ctx.restore();
     return true;
+  }
+
+  function drawVarietySprite(group, variant, x, y, size, rotation, alpha) {
+    const frames = varietyFrames[group];
+    if (!frames || frames.length === 0) {
+      return false;
+    }
+
+    const index = Math.abs(Math.round(variant || 0)) % frames.length;
+    return drawSheetSprite(assets.variety, frames[index], 4, 4, x, y, size, rotation, alpha);
+  }
+
+  function currentBackdrop() {
+    const backdrops = assets.backdrops || [assets.backdrop];
+    const index = Math.abs(Math.round(game.backdropVariant || 0)) % backdrops.length;
+    return backdrops[index] || assets.backdrop;
+  }
+
+  function visualUnit(key, salt) {
+    return hashSeed(`${key}:${salt}`) / 0x100000000;
+  }
+
+  function visualInt(key, salt, min, max) {
+    return Math.floor(visualUnit(key, salt) * (max - min + 1)) + min;
+  }
+
+  function visualRange(key, salt, min, max) {
+    return min + visualUnit(key, salt) * (max - min);
+  }
+
+  function makeVisualKey() {
+    if (currentMode === "daily") {
+      return `daily:${currentDateKey}`;
+    }
+
+    return `free:${currentDateKey}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+  }
+
+  function makeArenaProps(key) {
+    const count = visualInt(key, "arena-prop-count", 6, 9);
+    const margin = 58;
+
+    return Array.from({ length: count }, (_, index) => {
+      let x = visualRange(key, `arena-prop-x-${index}`, margin, canvas.width - margin);
+      let y = visualRange(key, `arena-prop-y-${index}`, margin, canvas.height - margin);
+
+      if (distance(x, y, canvas.width / 2, canvas.height / 2) < 105) {
+        y = y < canvas.height / 2 ? margin : canvas.height - margin;
+      }
+
+      return {
+        frame: visualInt(key, `arena-prop-frame-${index}`, 0, arenaPropFrames.length - 1),
+        x,
+        y,
+        size: visualRange(key, `arena-prop-size-${index}`, 38, 78),
+        rotation: visualRange(key, `arena-prop-rotation-${index}`, -Math.PI, Math.PI),
+        alpha: visualRange(key, `arena-prop-alpha-${index}`, 0.16, 0.31),
+        drift: visualRange(key, `arena-prop-drift-${index}`, 0.32, 0.9),
+        bob: visualRange(key, `arena-prop-bob-${index}`, 1.2, 3.8),
+        phase: visualRange(key, `arena-prop-phase-${index}`, 0, Math.PI * 2)
+      };
+    });
   }
 
   async function checkStorage() {
@@ -469,78 +468,14 @@ const DB_NAME = "scoreyard-sites-storage";
     drawScene();
   }
 
-  function makeAvatarDataUrl(name) {
-    const avatarCanvas = document.createElement("canvas");
-    const avatarCtx = avatarCanvas.getContext("2d");
-    const initials = (name || "GP")
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(part => part[0].toUpperCase())
-      .join("") || "GP";
-
-    avatarCanvas.width = 160;
-    avatarCanvas.height = 160;
-
-    const gradient = avatarCtx.createLinearGradient(0, 0, 160, 160);
-    gradient.addColorStop(0, "#c7f4df");
-    gradient.addColorStop(1, "#147d73");
-
-    avatarCtx.fillStyle = gradient;
-    avatarCtx.fillRect(0, 0, 160, 160);
-    avatarCtx.fillStyle = "#ffffff";
-    avatarCtx.font = "700 58px system-ui, sans-serif";
-    avatarCtx.textAlign = "center";
-    avatarCtx.textBaseline = "middle";
-    avatarCtx.fillText(initials, 80, 84);
-
-    return avatarCanvas.toDataURL("image/png");
-  }
-
-  function compressAvatar(file) {
-    return new Promise((resolve, reject) => {
-      if (!file.type.startsWith("image/")) {
-        reject(new Error("Please choose an image file."));
-        return;
-      }
-
-      if (file.size > 4 * 1024 * 1024) {
-        reject(new Error("Please choose an image under 4 MB."));
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onerror = () => reject(reader.error);
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error("Unable to read that image."));
-        img.onload = () => {
-          const avatarCanvas = document.createElement("canvas");
-          const avatarCtx = avatarCanvas.getContext("2d");
-          const size = 256;
-          const scale = Math.max(size / img.width, size / img.height);
-          const width = img.width * scale;
-          const height = img.height * scale;
-          const x = (size - width) / 2;
-          const y = (size - height) / 2;
-
-          avatarCanvas.width = size;
-          avatarCanvas.height = size;
-          avatarCtx.fillStyle = "#f7fbf8";
-          avatarCtx.fillRect(0, 0, size, size);
-          avatarCtx.drawImage(img, x, y, width, height);
-          resolve(avatarCanvas.toDataURL("image/jpeg", 0.82));
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
   function resetGame() {
     game.status = "idle";
     game.player.x = canvas.width / 2;
     game.player.y = canvas.height / 2;
+    game.playerVariant = 0;
+    game.backdropVariant = 0;
+    game.bossVariant = 0;
+    game.arenaProps = [];
     game.hazards = [];
     game.orbs = [];
     game.powerUps = [];
@@ -604,12 +539,17 @@ const DB_NAME = "scoreyard-sites-storage";
       profile.dailyBestCurve.dateKey === currentDateKey
         ? profile.dailyBestCurve.curve
         : null;
-    // Daily Challenge: seed from the UTC date so everyone gets the same arena
-    // today. Free Play: fresh random seed each run (feels random, like before).
-    rng.seed(currentMode === "daily" ? dailySeed() : (Math.random() * 0xffffffff) >>> 0);
+    // Daily Challenge: seed from the same locked UTC date key saved with the run.
+    // Free Play: fresh random seed each run (feels random, like before).
+    rng.seed(currentMode === "daily" ? hashSeed(currentDateKey) : (Math.random() * 0xffffffff) >>> 0);
+    currentVisualKey = makeVisualKey();
     game.status = "playing";
     game.player.x = canvas.width / 2;
     game.player.y = canvas.height / 2;
+    game.playerVariant = rng.int(0, varietyFrames.players.length - 1);
+    game.backdropVariant = rng.int(0, assets.backdrops.length - 1);
+    game.bossVariant = visualInt(currentVisualKey, "boss-variant", 0, bossVariantFrames.length - 1);
+    game.arenaProps = makeArenaProps(currentVisualKey);
     game.hazards = Array.from({ length: 3 }, () => makeHazard("mine"));
     game.orbs = Array.from({ length: 6 }, makeOrb);
     game.powerUps = [makePowerUp("shield"), makePowerUp("magnet")];
@@ -710,7 +650,8 @@ const DB_NAME = "scoreyard-sites-storage";
       y: rng.range(28, canvas.height - 28),
       r: rng.range(10, 14),
       phase: rng.range(0, Math.PI * 2),
-      rotSpeed: rng.range(1.8, 3.6)
+      rotSpeed: rng.range(1.8, 3.6),
+      variant: rng.int(0, varietyFrames.orbs.length - 1)
     };
   }
 
@@ -740,6 +681,16 @@ const DB_NAME = "scoreyard-sites-storage";
     ]);
   }
 
+  function chooseEnemyVariant(enemyType) {
+    const pools = {
+      mine: [3],
+      chaser: [0, 1],
+      dasher: [2],
+      orbiter: [1, 3],
+    };
+    return rng.pick(pools[enemyType] || [0, 1, 2, 3]);
+  }
+
   function makeHazard(type) {
     const enemyType = type || chooseEnemyType();
     const speed = enemyType === "chaser" ? rng.range(80, 125) : rng.range(95, 190);
@@ -759,7 +710,8 @@ const DB_NAME = "scoreyard-sites-storage";
       orbitRadius: rng.range(110, 240),
       orbitSpeed: (rng.next() > 0.5 ? 1 : -1) * rng.range(0.72, 1.27),
       centerX: canvas.width / 2,
-      centerY: canvas.height / 2
+      centerY: canvas.height / 2,
+      variant: chooseEnemyVariant(enemyType)
     };
 
     if (enemyType === "orbiter") {
@@ -778,7 +730,8 @@ const DB_NAME = "scoreyard-sites-storage";
       x: rng.range(38, canvas.width - 38),
       y: rng.range(38, canvas.height - 38),
       r: powerType === "bomb" ? 17 : 15,
-      phase: rng.range(0, Math.PI * 2)
+      phase: rng.range(0, Math.PI * 2),
+      variant: rng.int(0, varietyFrames.powerups.length - 1)
     };
   }
 
@@ -1179,16 +1132,6 @@ const DB_NAME = "scoreyard-sites-storage";
     }
   }
 
-  function distanceToSegment(point, segment) {
-    const dx = segment.x2 - segment.x1;
-    const dy = segment.y2 - segment.y1;
-    const lengthSq = dx * dx + dy * dy || 1;
-    const t = clamp(((point.x - segment.x1) * dx + (point.y - segment.y1) * dy) / lengthSq, 0, 1);
-    const x = segment.x1 + t * dx;
-    const y = segment.y1 + t * dy;
-    return Math.hypot(point.x - x, point.y - y);
-  }
-
   function collectOrb(orb) {
     game.orbCount += 1;
     game.combo = Math.min(9, game.combo + 1);
@@ -1430,9 +1373,11 @@ const DB_NAME = "scoreyard-sites-storage";
   }
 
   function drawBackground() {
-    if (imageReady(assets.backdrop)) {
-      drawImageCover(assets.backdrop, 0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "rgba(5, 20, 19, 0.18)";
+    const backdrop = currentBackdrop();
+
+    if (imageReady(backdrop)) {
+      drawImageCover(backdrop, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(5, 20, 19, 0.26)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
@@ -1456,6 +1401,8 @@ const DB_NAME = "scoreyard-sites-storage";
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    drawArenaProps();
+
     stars.forEach(star => {
       const y = (star.y + game.worldTime * star.speed) % canvas.height;
       ctx.globalAlpha = (star.alpha + Math.sin(game.worldTime * 2 + star.x) * 0.12) * 0.6;
@@ -1466,7 +1413,7 @@ const DB_NAME = "scoreyard-sites-storage";
     });
     ctx.globalAlpha = 1;
 
-    ctx.strokeStyle = "rgba(199, 244, 223, 0.08)";
+    ctx.strokeStyle = "rgba(199, 244, 223, 0.055)";
     ctx.lineWidth = 1;
 
     for (let x = 0; x <= canvas.width; x += 40) {
@@ -1490,6 +1437,34 @@ const DB_NAME = "scoreyard-sites-storage";
     ctx.moveTo(0, scanY);
     ctx.lineTo(canvas.width, scanY + 16);
     ctx.stroke();
+  }
+
+  function drawArenaProps() {
+    if (!game.arenaProps.length || !imageReady(assets.arenaProps)) {
+      return;
+    }
+
+    game.arenaProps.forEach(prop => {
+      const frame = arenaPropFrames[prop.frame % arenaPropFrames.length];
+      const bob = Math.sin(game.worldTime * prop.drift + prop.phase) * prop.bob;
+      const rotation = prop.rotation + Math.sin(game.worldTime * 0.2 + prop.phase) * 0.035;
+
+      ctx.save();
+      ctx.shadowColor = "rgba(44, 242, 143, 0.42)";
+      ctx.shadowBlur = 10;
+      drawSheetSprite(
+        assets.arenaProps,
+        frame,
+        4,
+        3,
+        prop.x,
+        prop.y + bob,
+        prop.size,
+        rotation,
+        prop.alpha
+      );
+      ctx.restore();
+    });
   }
 
   function drawPlayer() {
@@ -1536,10 +1511,15 @@ const DB_NAME = "scoreyard-sites-storage";
       ctx.stroke();
     }
 
-    if (imageReady(assets.player)) {
-      const shipSize = r * 5.4;
-      const tilt = moving ? game.inputX * 0.14 : Math.sin(game.worldTime * 2) * 0.025;
+    const shipSize = r * 5.4;
+    const tilt = moving ? game.inputX * 0.14 : Math.sin(game.worldTime * 2) * 0.025;
 
+    if (drawVarietySprite("players", game.playerVariant, x, y + 2, shipSize, tilt, alpha)) {
+      ctx.restore();
+      return;
+    }
+
+    if (imageReady(assets.player)) {
       ctx.save();
       ctx.translate(x, y + 2);
       ctx.rotate(tilt);
@@ -1605,6 +1585,10 @@ const DB_NAME = "scoreyard-sites-storage";
   function drawOrb(orb) {
     const pulse = 1 + Math.sin(game.worldTime * 5 + orb.phase) * 0.08;
 
+    if (drawVarietySprite("orbs", orb.variant, orb.x, orb.y, orb.r * 5.9 * pulse, game.worldTime * 0.28 + orb.phase * 0.08, 1)) {
+      return;
+    }
+
     if (drawSprite("crystal", orb.x, orb.y, orb.r * 5.7 * pulse, game.worldTime * 0.28 + orb.phase * 0.08, 1)) {
       return;
     }
@@ -1646,9 +1630,10 @@ const DB_NAME = "scoreyard-sites-storage";
 
     const size = hazard.type === "chaser" ? hazard.r * 4.9 : hazard.r * 5.25;
 
-    const drewEnemySprite = hazard.type === "mine"
-      ? drawSprite("hazard", hazard.x, hazard.y, size, hazard.angle, 1)
-      : drawSheetSprite(assets.enemies, enemyFrames[hazard.type] || enemyFrames.sentinel, 3, 2, hazard.x, hazard.y, size, hazard.angle, 1);
+    const drewEnemySprite = drawVarietySprite("enemies", hazard.variant, hazard.x, hazard.y, size, hazard.angle, 1)
+      || (hazard.type === "mine"
+        ? drawSprite("hazard", hazard.x, hazard.y, size, hazard.angle, 1)
+        : drawSheetSprite(assets.enemies, enemyFrames[hazard.type] || enemyFrames.sentinel, 3, 2, hazard.x, hazard.y, size, hazard.angle, 1));
 
     if (drewEnemySprite) {
       drawEnemyTypeRing(hazard);
@@ -1731,6 +1716,10 @@ const DB_NAME = "scoreyard-sites-storage";
   function drawPowerUp(powerUp) {
     const pulse = 1 + Math.sin(game.worldTime * 4 + powerUp.phase) * 0.12;
     const config = powerUpConfig[powerUp.type];
+
+    if (drawSheetSprite(assets.variety, varietyPowerUpFrame(powerUp.type), 4, 4, powerUp.x, powerUp.y, powerUp.r * 5.15 * pulse, game.worldTime * 0.45 + powerUp.phase * 0.08, 1)) {
+      return;
+    }
 
     if (drawSheetSprite(assets.powerups, powerUpFrames[powerUp.type], 4, 2, powerUp.x, powerUp.y, powerUp.r * 5.25 * pulse, game.worldTime * 0.45 + powerUp.phase * 0.08, 1)) {
       return;
@@ -1845,9 +1834,13 @@ const DB_NAME = "scoreyard-sites-storage";
     ctx.translate(boss.x, boss.y);
     ctx.rotate(boss.angle);
 
-    if (imageReady(assets.boss)) {
-      ctx.shadowColor = "rgba(226, 185, 59, 0.8)";
-      ctx.shadowBlur = 24;
+    const bossFrame = bossVariantFrames[game.bossVariant % bossVariantFrames.length];
+
+    ctx.shadowColor = "rgba(226, 185, 59, 0.8)";
+    ctx.shadowBlur = 24;
+    if (drawSheetSprite(assets.bossVariants, bossFrame, 2, 2, 0, 0, bossSize, 0, 1)) {
+      ctx.shadowBlur = 0;
+    } else if (imageReady(assets.boss)) {
       ctx.drawImage(assets.boss, -bossSize / 2, -bossSize / 2, bossSize, bossSize);
       ctx.shadowBlur = 0;
     } else {
@@ -1976,23 +1969,6 @@ const DB_NAME = "scoreyard-sites-storage";
     });
 
     emptyState.classList.toggle("is-visible", visibleScores.length === 0);
-  }
-
-  function formatDate(value) {
-    return new Intl.DateTimeFormat(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    }).format(new Date(value));
-  }
-
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
-  function distance(a, b) {
-    return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
   profileForm.addEventListener("submit", async event => {
