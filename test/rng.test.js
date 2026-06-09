@@ -1,7 +1,7 @@
 // node --test test/rng.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import * as rng from "../rng.js";
+import * as rng from "../src/core/rng.js";
 
 test("same seed produces the same ordered sequence (determinism)", () => {
   rng.seed(123456);

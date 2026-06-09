@@ -1,7 +1,7 @@
 // node --test test/pace.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { paceDelta } from "../pace.js";
+import { paceDelta } from "../src/util/pace.js";
 
 test("returns null when there is no best curve (first run)", () => {
   assert.equal(paceDelta(null, 5, 100), null);

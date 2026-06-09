@@ -1,7 +1,7 @@
 // node --test test/store.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeProfile, recordRun, todayBest, playedToday } from "../store.js";
+import { normalizeProfile, recordRun, todayBest, playedToday } from "../src/store/store.js";
 
 test("normalizeProfile defaults all v2 fields for a v1 record (migration)", () => {
   const v1 = { id: "workspace-player", name: "Ana", email: "a@x.com", avatar: "data:..." };

@@ -1,7 +1,7 @@
 // node --test test/share.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildShareString } from "../share.js";
+import { buildShareString } from "../src/ui/share.js";
 
 test("includes date, score, combo, orbs", () => {
   const s = buildShareString({ dateKey: "2026-06-05", score: 8440, maxCombo: 12, orbs: 24 });

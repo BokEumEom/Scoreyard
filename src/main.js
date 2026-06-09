@@ -3,14 +3,14 @@
 // Challenge can be deterministic; cosmetic randomness (stars, death particles,
 // screen-shake) and makeId stay on Math.random. seed.js (UTC daily seed) is
 // wired in when the Daily Challenge UI lands.
-import * as rng from "./rng.js";
-import { hashSeed, utcDateKey } from "./seed.js";
-import { normalizeProfile, recordRun, todayBest, playedToday } from "./store.js";
-import * as audio from "./audio.js";
-import { buildShareString } from "./share.js";
-import { paceDelta } from "./pace.js";
-import { PROFILE_ID, RUN_SECONDS, BOSS_START_SECONDS, MAX_HEALTH } from "./config.js";
-import { openDb, getStore, makeId } from "./db.js";
+import * as rng from "./core/rng.js";
+import { hashSeed, utcDateKey } from "./core/seed.js";
+import { normalizeProfile, recordRun, todayBest, playedToday } from "./store/store.js";
+import * as audio from "./audio/audio.js";
+import { buildShareString } from "./ui/share.js";
+import { paceDelta } from "./util/pace.js";
+import { PROFILE_ID, RUN_SECONDS, BOSS_START_SECONDS, MAX_HEALTH } from "./core/config.js";
+import { openDb, getStore, makeId } from "./store/db.js";
 import {
   spriteFrames,
   powerUpFrames,
@@ -20,9 +20,9 @@ import {
   arenaPropFrames,
   powerUpConfig,
   varietyPowerUpFrame
-} from "./sprites.js";
-import { clamp, distance, distanceToSegment, formatDate } from "./mathx.js";
-import { makeAvatarDataUrl, compressAvatar } from "./avatar.js";
+} from "./data/sprites.js";
+import { clamp, distance, distanceToSegment, formatDate } from "./util/mathx.js";
+import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
 
 const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");

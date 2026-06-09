@@ -1,7 +1,7 @@
 // db.js — IndexedDB access layer for Scoreyard.
 // Two object stores: "profile" (single keyed record) and "scores" (run history).
 // Self-contained; the connection promise is memoized for the page lifetime.
-import { DB_NAME, DB_VERSION } from "./config.js";
+import { DB_NAME, DB_VERSION } from "../core/config.js";
 
 let dbPromise;
 

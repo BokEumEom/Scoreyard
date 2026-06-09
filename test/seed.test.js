@@ -1,7 +1,7 @@
 // node --test test/seed.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { utcDateKey, hashSeed, dailySeed } from "../seed.js";
+import { utcDateKey, hashSeed, dailySeed } from "../src/core/seed.js";
 
 test("utcDateKey formats UTC YYYY-MM-DD", () => {
   assert.equal(utcDateKey(new Date("2026-06-05T12:00:00Z")), "2026-06-05");
