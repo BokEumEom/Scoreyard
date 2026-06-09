@@ -19,7 +19,8 @@ import {
   bossVariantFrames,
   arenaPropFrames,
   powerUpConfig,
-  varietyPowerUpFrame
+  varietyPowerUpFrame,
+  combatFxFrames
 } from "./data/sprites.js";
 import { clamp, distance, distanceToSegment, formatDate } from "./util/mathx.js";
 import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
@@ -101,6 +102,7 @@ const canvas = document.getElementById("gameCanvas");
     lasers: [],
     bolts: [],
     fireTimer: 0,
+    fx: [],
     particles: [],
     shockwaves: [],
     floatingTexts: [],
@@ -147,7 +149,8 @@ const canvas = document.getElementById("gameCanvas");
     player: loadImage("assets/player-drone.png"),
     powerups: loadImage("assets/powerups.png"),
     sprites: loadImage("assets/sprites.png"),
-    variety: loadImage("assets/variety-atlas.png")
+    variety: loadImage("assets/variety-atlas.png"),
+    combatFx: loadImage("assets/combat-fx.png")
   };
 
   function loadImage(src) {
@@ -488,6 +491,7 @@ const canvas = document.getElementById("gameCanvas");
     game.lasers = [];
     game.bolts = [];
     game.fireTimer = 0;
+    game.fx = [];
     game.particles = [];
     game.shockwaves = [];
     game.floatingTexts = [];
@@ -564,6 +568,7 @@ const canvas = document.getElementById("gameCanvas");
     game.lasers = [];
     game.bolts = [];
     game.fireTimer = 0;
+    game.fx = [];
     game.particles = [];
     game.shockwaves = [];
     game.floatingTexts = [];
@@ -808,6 +813,7 @@ const canvas = document.getElementById("gameCanvas");
       if (hazard) {
         hazard.hp -= bolt.damage;
         spawnBurst(bolt.x, bolt.y, "#8ad7ff", 6);
+        spawnFx("enemyHitSpark", bolt.x, bolt.y, 24, 0.2);
         if (hazard.hp <= 0) {
           killEnemy(hazard);
         }
@@ -825,7 +831,19 @@ const canvas = document.getElementById("gameCanvas");
     game.score += reward;
     spawnBurst(hazard.x, hazard.y, "#ffd166", 16);
     spawnShockwave(hazard.x, hazard.y, "#ef5a5f", 70, 0.4);
+    spawnFx("enemyKillBurst", hazard.x, hazard.y, 60, 0.4);
     addFloatingText(`+${reward}`, hazard.x, hazard.y - 18, "#ffd166", 0.9);
+  }
+
+  function spawnFx(frame, x, y, size, life) {
+    game.fx.push({ frame, x, y, size, life, maxLife: life, rot: Math.random() * Math.PI * 2 });
+  }
+
+  function updateFx(dt) {
+    game.fx = game.fx.filter(f => {
+      f.life -= dt;
+      return f.life > 0;
+    });
   }
 
   function tick(now) {
@@ -963,6 +981,7 @@ const canvas = document.getElementById("gameCanvas");
     }
 
     updateEffects(dt);
+    updateFx(dt);
     updateHud();
 
     if (game.elapsed >= RUN_SECONDS) {
@@ -1401,6 +1420,7 @@ const canvas = document.getElementById("gameCanvas");
     drawBoss();
     drawShockwaves();
     drawParticles();
+    drawFxLayer();
     drawPlayer();
     drawFloatingTexts();
     ctx.restore();
@@ -1883,20 +1903,41 @@ const canvas = document.getElementById("gameCanvas");
     });
   }
 
+  // Additive-blended combat-fx atlas (4x3). Black background contributes nothing
+  // under "lighter", so the glows pop. Returns false if the atlas isn't loaded yet.
+  function drawFx(frameName, x, y, size, rotation, alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const drawn = drawSheetSprite(assets.combatFx, combatFxFrames[frameName], 4, 3, x, y, size, rotation, alpha);
+    ctx.restore();
+    return drawn;
+  }
+
+  function drawFxLayer() {
+    game.fx.forEach(f => {
+      const t = Math.max(0, f.life / f.maxLife); // 1 -> 0 over its lifetime
+      drawFx(f.frame, f.x, f.y, f.size * (1.4 - t * 0.4), f.rot, t);
+    });
+  }
+
   function drawBolts() {
     if (game.bolts.length === 0) {
       return;
     }
-    ctx.save();
-    ctx.fillStyle = "#8ad7ff";
-    ctx.shadowColor = "#8ad7ff";
-    ctx.shadowBlur = 8;
+    const frame = game.combo >= 6 ? "chargedBolt" : "bolt";
     game.bolts.forEach(bolt => {
-      ctx.beginPath();
-      ctx.arc(bolt.x, bolt.y, bolt.r, 0, Math.PI * 2);
-      ctx.fill();
+      const angle = Math.atan2(bolt.vy, bolt.vx);
+      if (!drawFx(frame, bolt.x, bolt.y, 30, angle, 1)) {
+        ctx.save();
+        ctx.fillStyle = "#8ad7ff";
+        ctx.shadowColor = "#8ad7ff";
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(bolt.x, bolt.y, bolt.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     });
-    ctx.restore();
   }
 
   function drawBoss() {

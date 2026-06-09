@@ -77,6 +77,21 @@ export const arenaPropFrames = [
   { col: 3, row: 2 }
 ];
 
+export const combatFxFrames = {
+  bolt: { col: 0, row: 0 },
+  chargedBolt: { col: 1, row: 0 },
+  enemyHitSpark: { col: 2, row: 0 },
+  enemyKillBurst: { col: 3, row: 0 },
+  bossImpact: { col: 0, row: 1 },
+  shieldCrack: { col: 1, row: 1 },
+  hpShardBurst: { col: 2, row: 1 },
+  miniOrbDrop: { col: 3, row: 1 },
+  firepowerFlare: { col: 0, row: 2 },
+  targetLock: { col: 1, row: 2 },
+  phaseSpark: { col: 2, row: 2 },
+  bossWeakpointFlash: { col: 3, row: 2 }
+};
+
 export const powerUpConfig = {
   shield: { label: "SHIELD", color: "#49b6ff", text: "+Shield" },
   magnet: { label: "MAGNET", color: "#b76cff", text: "Magnet 6s" },
