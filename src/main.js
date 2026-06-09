@@ -28,6 +28,7 @@ import { enemyConfig } from "./data/enemies.js";
 import { acquireTarget, fireInterval, boltDamage, createBolt } from "./game/weapons.js";
 import { canvas, ctx } from "./core/dom.js";
 import { game } from "./game/state.js";
+import { makeHazard, makeOrb, makePowerUp, weightedPick } from "./game/spawn.js";
 import { assets, setRedraw } from "./render/assets.js";
 import {
   imageReady,
@@ -110,12 +111,6 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
   // ./core/dom.js, ./game/state.js, and ./render/assets.js (imported above).
   // setRedraw lets asset loads repaint without assets.js importing the renderer.
   setRedraw(drawScene);
-
-
-
-
-
-
 
   function visualUnit(key, salt) {
     return hashSeed(`${key}:${salt}`) / 0x100000000;
@@ -525,125 +520,6 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
 
     refreshHome();
     drawScene(beatBest ? "NEW BEST!" : "Run saved");
-  }
-
-  function makeOrb() {
-    return {
-      x: rng.range(28, canvas.width - 28),
-      y: rng.range(28, canvas.height - 28),
-      r: rng.range(10, 14),
-      phase: rng.range(0, Math.PI * 2),
-      rotSpeed: rng.range(1.8, 3.6),
-      variant: rng.int(0, varietyFrames.orbs.length - 1)
-    };
-  }
-
-  function chooseEnemyType() {
-    if (game.elapsed < 16) {
-      return "mine";
-    }
-
-    if (game.elapsed < 30) {
-      return rng.next() < 0.48 ? "chaser" : "mine";
-    }
-
-    if (game.elapsed < BOSS_START_SECONDS) {
-      return weightedPick([
-        ["mine", 3],
-        ["chaser", 3],
-        ["dasher", 2],
-        ["orbiter", 1]
-      ]);
-    }
-
-    return weightedPick([
-      ["mine", 2],
-      ["chaser", 3],
-      ["dasher", 3],
-      ["orbiter", 2]
-    ]);
-  }
-
-  function chooseEnemyVariant(enemyType) {
-    const pools = {
-      mine: [3],
-      chaser: [0, 1],
-      dasher: [2],
-      orbiter: [1, 3],
-    };
-    return rng.pick(pools[enemyType] || [0, 1, 2, 3]);
-  }
-
-  function makeHazard(type) {
-    const enemyType = type || chooseEnemyType();
-    const speed = enemyType === "chaser" ? rng.range(80, 125) : rng.range(95, 190);
-    const angle = rng.range(0, Math.PI * 2);
-    const hazard = {
-      type: enemyType,
-      x: rng.range(32, canvas.width - 32),
-      y: rng.range(32, canvas.height - 32),
-      r: enemyType === "dasher" ? 18 : rng.range(14, 22),
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      spin: (rng.next() > 0.5 ? 1 : -1) * rng.range(1.4, 3.2),
-      angle: rng.range(0, Math.PI * 2),
-      timer: enemyType === "dasher" ? rng.range(0.8, 1.5) : 0,
-      mode: enemyType === "dasher" ? "windup" : "move",
-      orbitAngle: rng.range(0, Math.PI * 2),
-      orbitRadius: rng.range(110, 240),
-      orbitSpeed: (rng.next() > 0.5 ? 1 : -1) * rng.range(0.72, 1.27),
-      centerX: canvas.width / 2,
-      centerY: canvas.height / 2,
-      variant: chooseEnemyVariant(enemyType),
-      hp: enemyConfig(enemyType).hp
-    };
-
-    if (enemyType === "orbiter") {
-      hazard.x = hazard.centerX + Math.cos(hazard.orbitAngle) * hazard.orbitRadius;
-      hazard.y = hazard.centerY + Math.sin(hazard.orbitAngle) * hazard.orbitRadius * 0.55;
-    }
-
-    return hazard;
-  }
-
-  function makePowerUp(type) {
-    const powerType = type || choosePowerUpType();
-
-    return {
-      type: powerType,
-      x: rng.range(38, canvas.width - 38),
-      y: rng.range(38, canvas.height - 38),
-      r: powerType === "bomb" ? 17 : 15,
-      phase: rng.range(0, Math.PI * 2),
-      variant: rng.int(0, varietyFrames.powerups.length - 1)
-    };
-  }
-
-  function choosePowerUpType() {
-    return weightedPick([
-      ["shield", 3],
-      ["magnet", 2],
-      ["time", 2],
-      ["repair", game.health < 3 ? 3 : 1],
-      ["bomb", 1.2],
-      ["boost", 2],
-      ["phase", 1.2]
-    ]);
-  }
-
-  function weightedPick(entries) {
-    const total = entries.reduce((sum, entry) => sum + entry[1], 0);
-    let roll = rng.next() * total;
-
-    for (const [value, weight] of entries) {
-      roll -= weight;
-
-      if (roll <= 0) {
-        return value;
-      }
-    }
-
-    return entries[entries.length - 1][0];
   }
 
   // Hitstop (E3): briefly freeze game advancement for impact, keep rendering.
@@ -1322,7 +1198,6 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     }
   }
 
-
   function drawPlayer() {
     const { x, y, r } = game.player;
     const moving = Math.hypot(game.inputX, game.inputY) > 0.05;
@@ -1438,22 +1313,8 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     ctx.restore();
   }
 
-
-
-
-
-
-
-
   // Additive-blended combat-fx atlas (4x3). Black background contributes nothing
   // under "lighter", so the glows pop. Returns false if the atlas isn't loaded yet.
-
-
-
-
-
-
-
 
   function renderScores() {
     const query = scoreSearch.value.trim().toLowerCase();
