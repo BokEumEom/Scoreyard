@@ -8,116 +8,80 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="game-panel" aria-labelledby="game-title">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Sites game</p>
-            <h1 id="game-title">Scoreyard</h1>
-          </div>
-          <div class="topbar-right">
-            <div class="storage-status" id="storageStatus">Checking storage...</div>
-            <div class="player-badge">
-              <div class="profile-summary">
-                <img id="avatarPreview" alt="Current player avatar">
-                <strong id="profileName">Guest player</strong>
-                <button type="button" id="editProfile" class="edit-profile" aria-expanded="false">Edit</button>
-              </div>
-              <form id="profileForm" class="profile-form profile-popover" style="display: none">
-                <label>
-                  Display name
-                  <input id="playerName" name="playerName" autocomplete="name" maxlength="40" placeholder="Alex Rivera">
-                </label>
-                <label class="avatar-picker">
-                  Avatar upload
-                  <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
-                </label>
-                <button type="submit">Save profile</button>
-              </form>
+      <section class="cabinet" aria-labelledby="game-title">
+        <!-- MARQUEE: title once + player chip -->
+        <header class="marquee">
+          <h1 id="game-title" class="marquee-title">Scoreyard</h1>
+          <div class="player-badge">
+            <div class="profile-summary">
+              <img id="avatarPreview" alt="Current player avatar">
+              <strong id="profileName">Guest player</strong>
+              <button type="button" id="editProfile" class="edit-profile" aria-expanded="false">Edit</button>
             </div>
+            <form id="profileForm" class="profile-form profile-popover" style="display: none">
+              <label>
+                Display name
+                <input id="playerName" name="playerName" autocomplete="name" maxlength="40" placeholder="Alex Rivera">
+              </label>
+              <label class="avatar-picker">
+                Avatar upload
+                <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
+              </label>
+              <button type="submit">Save profile</button>
+            </form>
           </div>
+          <div class="storage-status" id="storageStatus">Checking storage...</div>
         </header>
 
-        <div class="play-layout">
-          <section class="arena-wrap" aria-label="Game arena">
-            <div class="hud">
-              <div>
-                <span class="hud-label">Score</span>
-                <strong id="scoreValue">0</strong>
-              </div>
-              <div>
-                <span class="hud-label">Orbs</span>
-                <strong id="orbValue">0</strong>
-              </div>
-              <div>
-                <span class="hud-label">Health</span>
-                <strong id="healthValue">3</strong>
-              </div>
-              <div>
-                <span class="hud-label">Time</span>
-                <strong id="timeValue">75</strong>
-              </div>
-              <div>
-                <span class="hud-label">Combo</span>
-                <strong id="comboValue">x1</strong>
-              </div>
-              <div>
-                <span class="hud-label">Shield</span>
-                <strong id="shieldValue">0</strong>
-              </div>
-              <div>
-                <span class="hud-label">Pace</span>
-                <strong id="paceValue">—</strong>
-              </div>
-            </div>
-            <div class="game-stage">
-              <button type="button" class="mute-toggle" id="muteToggle" aria-label="Toggle sound" aria-pressed="false">♪ on</button>
-              <canvas id="gameCanvas" width="720" height="460" aria-label="Collect orbit crystals, grab shields, and dodge coral hazards"></canvas>
-              <div class="home-screen" id="homeScreen">
-                <div class="home-content">
-                  <p class="home-kicker">Retro arcade run</p>
-                  <h2>Scoreyard</h2>
-                  <div class="daily-card">
-                    <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
-                    <p class="daily-sub" id="dailySub">Everyone plays the same arena today.</p>
-                    <div class="daily-stats">
-                      <div class="stat-chip">
-                        <span class="stat-label">Today best</span>
-                        <strong id="todayBestValue">—</strong>
-                      </div>
-                      <div class="stat-chip">
-                        <span class="stat-label">All-time</span>
-                        <strong id="allTimeBestValue">0</strong>
-                      </div>
-                    </div>
-                    <button type="button" class="primary-btn arcade-start" id="homeStartGame">▶ Play today</button>
-                    <button type="button" class="ghost-btn share-btn" id="shareResult" hidden>⧉ Copy result</button>
-                  </div>
-                  <div class="freeplay-row">
-                    <div class="freeplay-copy">
-                      <strong>Free Play</strong>
-                      <span>unlimited practice · random arena</span>
-                    </div>
-                    <button type="button" class="ghost-btn" id="freeStartGame">Start</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="controls-row">
-              <button type="button" class="primary-btn" id="startGame">Start run</button>
-              <button type="button" id="endGame">End run</button>
-              <span class="hint">Move with WASD, arrows, or drag. Collect crystals, power-ups, and survive the Core Warden boss phase.</span>
-            </div>
-          </section>
+        <!-- DOM HUD bar (visible during play) -->
+        <div class="hud" id="hudBar" aria-live="off">
+          <div><span class="hud-label">Score</span><strong id="scoreValue">0</strong></div>
+          <div><span class="hud-label">Orbs</span><strong id="orbValue">0</strong></div>
+          <div><span class="hud-label">Hull</span><strong id="healthValue">3</strong></div>
+          <div><span class="hud-label">Time</span><strong id="timeValue">75</strong></div>
+          <div><span class="hud-label">Combo</span><strong id="comboValue">x1</strong></div>
+          <div><span class="hud-label">Shield</span><strong id="shieldValue">0</strong></div>
+          <div><span class="hud-label">Pace</span><strong id="paceValue">—</strong></div>
+        </div>
 
+        <!-- CENTER: pure play area -->
+        <div class="game-stage">
+          <button type="button" class="mute-toggle" id="muteToggle" aria-label="Toggle sound" aria-pressed="false">♪ on</button>
+          <canvas id="gameCanvas" width="720" height="460" aria-label="Collect orbit crystals, grab shields, and dodge coral hazards"></canvas>
+          <div class="home-screen" id="homeScreen">
+            <div class="home-content">
+              <div class="daily-card">
+                <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
+                <p class="daily-sub" id="dailySub">Everyone plays the same arena today.</p>
+                <div class="daily-stats">
+                  <div class="stat-chip"><span class="stat-label">Today best</span><strong id="todayBestValue">—</strong></div>
+                  <div class="stat-chip"><span class="stat-label">All-time</span><strong id="allTimeBestValue">0</strong></div>
+                </div>
+                <button type="button" class="primary-btn arcade-start" id="homeStartGame">▶ Play today</button>
+                <button type="button" class="ghost-btn share-btn" id="shareResult" hidden>⧉ Copy result</button>
+              </div>
+              <div class="freeplay-row">
+                <div class="freeplay-copy">
+                  <strong>Free Play</strong>
+                  <span>unlimited practice · random arena</span>
+                </div>
+                <button type="button" class="ghost-btn" id="freeStartGame">Start</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM: coin panel (consolidated controls) -->
+        <div class="coin-panel">
+          <button type="button" class="primary-btn coin-start" id="startGame">▶ Insert coin</button>
+          <button type="button" class="coin-end" id="endGame">End run</button>
+          <span class="hint">Move with WASD, arrows, or drag. Collect crystals, power-ups, and survive the Core Warden boss phase.</span>
         </div>
       </section>
 
       <section class="leaderboard-panel" aria-labelledby="leaderboard-title">
         <div class="section-head">
-          <div>
-            <p class="eyebrow">Persistent scores</p>
-            <h2 id="leaderboard-title">Leaderboard</h2>
-          </div>
+          <h2 id="leaderboard-title" class="board-title">High Scores</h2>
           <div class="filters" aria-label="Leaderboard filters">
             <input id="scoreSearch" type="search" placeholder="Filter players">
             <select id="scoreFilter" aria-label="Score filter">
@@ -131,6 +95,7 @@
           <table>
             <thead>
               <tr>
+                <th scope="col">#</th>
                 <th scope="col">Player</th>
                 <th scope="col">Score</th>
                 <th scope="col">Orbs</th>
@@ -147,6 +112,7 @@
 
     <template id="scoreRowTemplate">
       <tr>
+        <td class="rank-cell"></td>
         <td>
           <div class="player-cell">
             <img alt="">
