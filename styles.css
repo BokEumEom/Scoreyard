@@ -1247,3 +1247,44 @@ body {
   text-align: center;
   opacity: 0.8;
 }
+
+/* ===== Redesign Task 4: DOM HUD bar ===== */
+.hud {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.hud.is-hidden { display: none; }
+
+.hud > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hud-label {
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.hud strong {
+  font-family: var(--pixel);
+  font-size: 13px;
+  color: var(--cyan);
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+}
+
+.hud strong.is-low { color: var(--danger); text-shadow: 0 0 6px rgba(255, 77, 77, 0.6); }
+.hud strong.is-hot { color: var(--yellow); text-shadow: 0 0 6px rgba(255, 212, 0, 0.6); }
+
+@media (max-width: 720px) {
+  .hud { grid-template-columns: repeat(4, 1fr); }
+}
