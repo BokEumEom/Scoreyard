@@ -1,31 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @font-face {
   font-family: "Press Start 2P";
   src: url("assets/fonts/PressStart2P-Regular.woff2") format("woff2");
   font-display: swap;
   font-weight: 400;
 }
-
-:root {
-  /* Vivid retro arcade palette */
-  --bg: #0a0612;
-  --bg-2: #120a22;
-  --panel: #160d28;
-  --ink: #eafff9;
-  --ink-dim: rgba(234, 255, 249, 0.6);
-  --cyan: #00f0ff;
-  --magenta: #ff2d95;
-  --yellow: #ffd400;
-  --lime: #39ff14;
-  --danger: #ff4d4d;
-
-  --pixel: "Press Start 2P", "Courier New", monospace;
-  --mono: "Courier New", ui-monospace, monospace;
-
-  --glow-cyan: 0 0 8px rgba(0, 240, 255, 0.7), 0 0 18px rgba(0, 240, 255, 0.4);
-  --glow-magenta: 0 0 8px rgba(255, 45, 149, 0.7), 0 0 18px rgba(255, 45, 149, 0.4);
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
   color-scheme: dark;
@@ -51,6 +31,29 @@
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
   --sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-family: var(--sans);
+}
+
+/* Redesign tokens — declared after the legacy palette so they win on name
+   collisions (--bg/--bg-2/--panel/--ink/--magenta/--mono). Legacy tokens
+   (--teal/--coral/--line/etc.) remain for rules not yet rewritten. */
+:root {
+  /* Vivid retro arcade palette */
+  --bg: #0a0612;
+  --bg-2: #120a22;
+  --panel: #160d28;
+  --ink: #eafff9;
+  --ink-dim: rgba(234, 255, 249, 0.6);
+  --cyan: #00f0ff;
+  --magenta: #ff2d95;
+  --yellow: #ffd400;
+  --lime: #39ff14;
+  --danger: #ff4d4d;
+
+  --pixel: "Press Start 2P", "Courier New", monospace;
+  --mono: "Courier New", ui-monospace, monospace;
+
+  --glow-cyan: 0 0 8px rgba(0, 240, 255, 0.7), 0 0 18px rgba(0, 240, 255, 0.4);
+  --glow-magenta: 0 0 8px rgba(255, 45, 149, 0.7), 0 0 18px rgba(255, 45, 149, 0.4);
 }
 
 * {
