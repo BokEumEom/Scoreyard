@@ -1061,3 +1061,85 @@ button:active,
     0 30px 90px rgba(0, 0, 0, 0.55),
     0 0 60px rgba(34, 215, 181, 0.10);
 }
+
+/* ===== Topbar player badge (profile relocated from panel) ===== */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.topbar > div:first-child { text-align: left; }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.play-layout { display: block; }
+
+.player-badge { position: relative; }
+.player-badge .profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.player-badge .profile-summary img {
+  width: 32px;
+  height: 32px;
+  border-radius: 26%;
+  flex: none;
+}
+.player-badge .profile-summary strong {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-badge .edit-profile {
+  margin-left: 4px;
+  padding: 5px 11px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.player-badge .profile-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(280px, 80vw);
+  z-index: 50;
+  padding: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 640px) {
+  .topbar { align-items: flex-start; }
+  .player-badge .profile-popover { right: auto; left: 0; }
+}
+
+.topbar { position: relative; z-index: 30; }
+
+.player-badge form.profile-popover {
+  width: min(280px, 84vw) !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+.player-badge form.profile-popover label {
+  width: 100% !important;
+}
+.player-badge form.profile-popover input,
+.player-badge form.profile-popover button[type="submit"] {
+  width: 100% !important;
+}

@@ -14,7 +14,27 @@
             <p class="eyebrow">Sites game</p>
             <h1 id="game-title">Scoreyard</h1>
           </div>
-          <div class="storage-status" id="storageStatus">Checking storage...</div>
+          <div class="topbar-right">
+            <div class="storage-status" id="storageStatus">Checking storage...</div>
+            <div class="player-badge">
+              <div class="profile-summary">
+                <img id="avatarPreview" alt="Current player avatar">
+                <strong id="profileName">Guest player</strong>
+                <button type="button" id="editProfile" class="edit-profile" aria-expanded="false">Edit</button>
+              </div>
+              <form id="profileForm" class="profile-form profile-popover" style="display: none">
+                <label>
+                  Display name
+                  <input id="playerName" name="playerName" autocomplete="name" maxlength="40" placeholder="Alex Rivera">
+                </label>
+                <label class="avatar-picker">
+                  Avatar upload
+                  <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
+                </label>
+                <button type="submit">Save profile</button>
+              </form>
+            </div>
+          </div>
         </header>
 
         <div class="play-layout">
@@ -89,30 +109,6 @@
             </div>
           </section>
 
-          <aside class="profile-card player-dock" aria-labelledby="profile-title">
-            <div class="profile-heading">
-              <p class="eyebrow">Player station</p>
-              <h2 id="profile-title">Player profile</h2>
-            </div>
-            <div class="avatar-preview profile-summary">
-              <img id="avatarPreview" alt="Current player avatar">
-              <div>
-                <strong id="profileName">Guest player</strong>
-              </div>
-              <button type="button" id="editProfile" class="edit-profile">Edit</button>
-            </div>
-            <form id="profileForm" class="profile-form" style="display: none">
-              <label>
-                Display name
-                <input id="playerName" name="playerName" autocomplete="name" maxlength="40" placeholder="Alex Rivera">
-              </label>
-              <label class="avatar-picker">
-                Avatar upload
-                <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
-              </label>
-              <button type="submit">Save profile</button>
-            </form>
-          </aside>
         </div>
       </section>
 
