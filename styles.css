@@ -1173,3 +1173,77 @@ button:active,
 .player-badge form.profile-popover button[type="submit"] {
   width: 100% !important;
 }
+
+/* ===== Redesign Task 3: cabinet shell + marquee ===== */
+body {
+  min-height: 100dvh;
+  margin: 0;
+  background: radial-gradient(circle at 50% 0%, var(--bg-2), var(--bg) 70%);
+  color: var(--ink);
+  font-family: var(--mono);
+  overflow-x: hidden;
+}
+
+.app-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 18px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.cabinet {
+  position: relative;
+  border: 3px solid rgba(0, 240, 255, 0.35);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(0, 240, 255, 0.05), transparent 30%),
+    var(--panel);
+  box-shadow:
+    0 0 0 1px rgba(255, 45, 149, 0.25),
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    inset 0 0 60px rgba(0, 240, 255, 0.06);
+  padding: 0 0 18px;
+  overflow: hidden;
+}
+
+.marquee {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  background: linear-gradient(180deg, rgba(255, 45, 149, 0.18), rgba(0, 240, 255, 0.06));
+  border-bottom: 2px solid rgba(0, 240, 255, 0.3);
+  flex-wrap: wrap;
+}
+
+.marquee-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: clamp(20px, 4.5vw, 34px);
+  letter-spacing: 2px;
+  color: var(--ink);
+  text-transform: uppercase;
+  text-shadow: var(--glow-cyan);
+  animation: marquee-flicker 4.5s infinite steps(1);
+}
+
+@keyframes marquee-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.78; }
+  95% { opacity: 1; }
+  96% { opacity: 0.85; }
+}
+
+.storage-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--lime);
+  width: 100%;
+  text-align: center;
+  opacity: 0.8;
+}
