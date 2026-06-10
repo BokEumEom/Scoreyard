@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 :root {
   color-scheme: dark;
   --bg: #030908;
@@ -19,8 +21,9 @@
     0 0 0 1px rgba(126, 255, 229, 0.16),
     0 22px 70px rgba(0, 0, 0, 0.46),
     0 0 38px rgba(34, 215, 181, 0.12);
-  --mono: "Courier New", ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  --sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--sans);
 }
 
 * {
@@ -28,7 +31,7 @@
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background:
     radial-gradient(circle at 16% 8%, rgba(255, 77, 225, 0.18), transparent 19rem),
@@ -1008,4 +1011,53 @@ th {
 }
 .profile-summary .edit-profile:hover {
   background: rgba(30, 60, 56, 0.85);
+}
+
+/* ===== Redesign pass: retro-arcade elevation ===== */
+html { scroll-behavior: smooth; }
+
+/* Tabular, monospaced digits for all data/score readouts */
+.score-cell,
+td,
+strong,
+[id$="Value"],
+[id$="Best"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Display title: tighter tracking + weight for presence */
+h1 {
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Consistent, lively interactive states (hover / press / focus) */
+button,
+select,
+.edit-profile {
+  transition: transform 0.12s ease, background 0.18s ease,
+    box-shadow 0.2s ease, border-color 0.18s ease;
+}
+button:hover,
+.edit-profile:hover { border-color: var(--line-strong); }
+button:active,
+.edit-profile:active { transform: translateY(1px) scale(0.99); }
+:where(button, a, input, select, [tabindex], [type="file"]):focus-visible {
+  outline: 2px solid var(--teal-strong);
+  outline-offset: 2px;
+}
+
+/* Player avatar reads as a squircle, not a generic circle */
+.avatar-preview img,
+.profile-summary img {
+  border-radius: 24%;
+}
+
+/* Tinted depth on the game arena so the canvas reads as the hero */
+.arena-wrap {
+  box-shadow:
+    0 0 0 1px rgba(126, 255, 229, 0.18),
+    0 30px 90px rgba(0, 0, 0, 0.55),
+    0 0 60px rgba(34, 215, 181, 0.10);
 }
