@@ -1,12 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-@font-face {
-  font-family: "Press Start 2P";
-  src: url("assets/fonts/PressStart2P-Regular.woff2") format("woff2");
-  font-display: swap;
-  font-weight: 400;
-}
-
 :root {
   color-scheme: dark;
   --bg: #030908;
@@ -31,29 +24,6 @@
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
   --sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-family: var(--sans);
-}
-
-/* Redesign tokens — declared after the legacy palette so they win on name
-   collisions (--bg/--bg-2/--panel/--ink/--magenta/--mono). Legacy tokens
-   (--teal/--coral/--line/etc.) remain for rules not yet rewritten. */
-:root {
-  /* Vivid retro arcade palette */
-  --bg: #0a0612;
-  --bg-2: #120a22;
-  --panel: #160d28;
-  --ink: #eafff9;
-  --ink-dim: rgba(234, 255, 249, 0.6);
-  --cyan: #00f0ff;
-  --magenta: #ff2d95;
-  --yellow: #ffd400;
-  --lime: #39ff14;
-  --danger: #ff4d4d;
-
-  --pixel: "Press Start 2P", "Courier New", monospace;
-  --mono: "Courier New", ui-monospace, monospace;
-
-  --glow-cyan: 0 0 8px rgba(0, 240, 255, 0.7), 0 0 18px rgba(0, 240, 255, 0.4);
-  --glow-magenta: 0 0 8px rgba(255, 45, 149, 0.7), 0 0 18px rgba(255, 45, 149, 0.4);
 }
 
 * {
@@ -155,7 +125,9 @@ button:disabled {
   z-index: 1;
 }
 
-.leaderboard-panel {
+.game-panel,
+.leaderboard-panel,
+.profile-card {
   background:
     linear-gradient(180deg, rgba(10, 31, 34, 0.96), rgba(3, 12, 15, 0.94)),
     radial-gradient(circle at top right, rgba(255, 77, 225, 0.11), transparent 26rem),
@@ -167,7 +139,9 @@ button:disabled {
   position: relative;
 }
 
-.leaderboard-panel::before {
+.game-panel::before,
+.leaderboard-panel::before,
+.profile-card::before {
   background:
     linear-gradient(90deg, transparent, rgba(126, 255, 229, 0.16), transparent),
     repeating-linear-gradient(
@@ -184,11 +158,14 @@ button:disabled {
   position: absolute;
 }
 
-.leaderboard-panel > * {
+.game-panel > *,
+.leaderboard-panel > *,
+.profile-card > * {
   position: relative;
   z-index: 1;
 }
 
+.game-panel,
 .leaderboard-panel {
   padding: 24px;
 }
@@ -198,21 +175,42 @@ button:disabled {
   max-width: 1080px;
 }
 
+.topbar,
 .section-head,
+.controls-row,
 .hud,
 .filters,
+.avatar-preview,
 .player-cell {
   display: flex;
   align-items: center;
 }
 
+.topbar,
 .section-head {
   gap: 18px;
   margin-bottom: 18px;
 }
 
+.topbar {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
 .section-head {
   justify-content: space-between;
+}
+
+.eyebrow {
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  margin: 0 0 0.28rem;
+  text-shadow: 0 0 16px rgba(247, 214, 74, 0.38);
+  text-transform: uppercase;
 }
 
 h1,
@@ -257,6 +255,19 @@ h2 {
   white-space: nowrap;
 }
 
+.play-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+.arena-wrap {
+  margin: 0 auto;
+  min-width: 0;
+  width: min(100%, 960px);
+}
+
 .game-stage {
   position: relative;
 }
@@ -297,6 +308,25 @@ h2 {
   font-family: var(--mono);
   font-size: 1.35rem;
   text-shadow: 0 0 16px rgba(126, 255, 229, 0.42);
+}
+
+.hud-pop {
+  animation: hud-pop 0.42s ease;
+}
+
+@keyframes hud-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    color: var(--gold);
+    transform: scale(1.24);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 canvas {
@@ -364,6 +394,16 @@ canvas {
   text-shadow: 0 0 18px rgba(44, 242, 143, 0.55);
 }
 
+.home-kicker {
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+}
+
 .home-content h2 {
   color: #fafeff;
   font-family: var(--mono);
@@ -412,9 +452,17 @@ canvas {
     0 0 24px rgba(44, 242, 143, 0.5);
 }
 
+.controls-row {
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
 .hint,
 .empty-state,
-.player-cell span {
+.player-cell span,
+.avatar-preview span {
   color: var(--muted);
   font-size: 0.92rem;
 }
@@ -425,8 +473,28 @@ canvas {
   max-width: 640px;
 }
 
+.profile-card {
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(144px, max-content) minmax(0, 1fr);
+  align-items: center;
+  padding: 14px;
+  width: min(100%, 1080px);
+}
+
+.profile-card h2 {
+  font-size: 1.05rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
 .profile-heading {
   min-width: 144px;
+}
+
+.profile-heading .eyebrow {
+  margin-bottom: 0.2rem;
 }
 
 form {
@@ -439,6 +507,11 @@ form {
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(220px, 1.05fr) minmax(180px, 0.95fr) minmax(230px, 1.15fr) minmax(150px, auto);
+}
+
+.profile-form .avatar-preview {
+  align-self: stretch;
+  grid-row: 1 / span 2;
 }
 
 .profile-form .avatar-picker {
@@ -508,6 +581,17 @@ input[type="file"]::file-selector-button {
   text-transform: uppercase;
 }
 
+.avatar-preview {
+  background:
+    linear-gradient(180deg, rgba(3, 12, 15, 0.72), rgba(8, 30, 31, 0.72)),
+    radial-gradient(circle at left, rgba(255, 77, 225, 0.12), transparent 70%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  gap: 12px;
+  padding: 10px;
+}
+
+.avatar-preview img,
 .player-cell img {
   background:
     radial-gradient(circle at 35% 30%, var(--teal-strong), transparent 36%),
@@ -521,16 +605,30 @@ input[type="file"]::file-selector-button {
   object-fit: cover;
 }
 
+.avatar-preview img {
+  height: 58px;
+  width: 58px;
+}
+
+.profile-form .avatar-preview img {
+  height: 48px;
+  width: 48px;
+}
+
+.avatar-preview div,
 .player-cell div {
   min-width: 0;
 }
 
+.avatar-preview strong,
+.avatar-preview span,
 .player-cell strong,
 .player-cell span {
   display: block;
   overflow-wrap: anywhere;
 }
 
+.avatar-preview strong,
 .player-cell strong {
   color: var(--ink);
 }
@@ -629,6 +727,11 @@ th {
 }
 
 @media (max-width: 1100px) {
+  .profile-card {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
   .profile-heading {
     align-items: end;
     display: flex;
@@ -636,8 +739,17 @@ th {
     min-width: 0;
   }
 
+  .profile-heading .eyebrow {
+    margin: 0;
+  }
+
   .profile-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-form .avatar-preview {
+    grid-column: 1 / -1;
+    grid-row: auto;
   }
 
   .profile-form .avatar-picker {
@@ -654,6 +766,10 @@ th {
 }
 
 @media (max-width: 900px) {
+  .play-layout {
+    grid-template-columns: 1fr;
+  }
+
   .hud {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -665,17 +781,27 @@ th {
     width: min(100% - 20px, 1180px);
   }
 
+  .game-panel,
   .leaderboard-panel {
     padding: 14px;
   }
 
+  .topbar,
   .section-head {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .topbar {
+    align-items: center;
+  }
+
   .storage-status {
     width: fit-content;
+  }
+
+  .profile-card {
+    padding: 12px;
   }
 
   .profile-heading {
@@ -688,7 +814,12 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .profile-form button[type="submit"] {
+  .profile-form .avatar-preview {
+    grid-column: auto;
+  }
+
+  .profile-form button[type="submit"],
+  .controls-row button {
     width: 100%;
   }
 
@@ -999,520 +1130,16 @@ button:active,
 
 .topbar { position: relative; z-index: 30; }
 
-/* Edit popover: the JS toggles inline `display` (none ⇄ grid). The legacy
-   `display: grid !important` was removed because it beat the inline `display:none`
-   and forced the popover permanently open. These rules shape the OPEN (grid) state
-   as a tidy single column without touching `display`, so the inline none/grid
-   toggle keeps working. Visual styling comes from the Task 8 `.profile-popover` rules. */
 .player-badge form.profile-popover {
+  width: min(280px, 84vw) !important;
+  display: grid !important;
   grid-template-columns: 1fr !important;
-  width: min(260px, 84vw) !important;
   gap: 12px !important;
 }
-.player-badge form.profile-popover label { width: 100% !important; }
+.player-badge form.profile-popover label {
+  width: 100% !important;
+}
 .player-badge form.profile-popover input,
-.player-badge form.profile-popover button[type="submit"] { width: 100% !important; }
-
-/* ===== Redesign Task 3: cabinet shell + marquee ===== */
-body {
-  min-height: 100dvh;
-  margin: 0;
-  background: radial-gradient(circle at 50% 0%, var(--bg-2), var(--bg) 70%);
-  color: var(--ink);
-  font-family: var(--mono);
-  overflow-x: hidden;
-}
-
-.app-shell {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 28px 18px 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.cabinet {
-  position: relative;
-  border: 3px solid rgba(0, 240, 255, 0.35);
-  border-radius: 18px;
-  background:
-    linear-gradient(180deg, rgba(0, 240, 255, 0.05), transparent 30%),
-    var(--panel);
-  box-shadow:
-    0 0 0 1px rgba(255, 45, 149, 0.25),
-    0 30px 80px rgba(0, 0, 0, 0.6),
-    inset 0 0 60px rgba(0, 240, 255, 0.06);
-  padding: 0 0 18px;
-  overflow: hidden;
-}
-
-.marquee {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 22px;
-  background: linear-gradient(180deg, rgba(255, 45, 149, 0.18), rgba(0, 240, 255, 0.06));
-  border-bottom: 2px solid rgba(0, 240, 255, 0.3);
-  flex-wrap: wrap;
-}
-
-.marquee-title {
-  margin: 0;
-  font-family: var(--pixel);
-  font-size: clamp(20px, 4.5vw, 34px);
-  letter-spacing: 2px;
-  color: var(--ink);
-  text-transform: uppercase;
-  text-shadow: var(--glow-cyan);
-  animation: marquee-flicker 4.5s infinite steps(1);
-}
-
-@keyframes marquee-flicker {
-  0%, 92%, 100% { opacity: 1; }
-  93% { opacity: 0.78; }
-  95% { opacity: 1; }
-  96% { opacity: 0.85; }
-}
-
-.storage-status {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--lime);
-  width: 100%;
-  text-align: center;
-  opacity: 0.8;
-}
-
-/* ===== Redesign Task 4: DOM HUD bar ===== */
-.hud {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-  padding: 12px 18px;
-  background: rgba(0, 0, 0, 0.35);
-  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
-}
-
-.hud.is-hidden { display: none; }
-
-.hud > div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.hud-label {
-  font-family: var(--pixel);
-  font-size: 7px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-
-.hud strong {
-  font-family: var(--pixel);
-  font-size: 13px;
-  color: var(--cyan);
-  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
-}
-
-.hud strong.is-low { color: var(--danger); text-shadow: 0 0 6px rgba(255, 77, 77, 0.6); }
-.hud strong.is-hot { color: var(--yellow); text-shadow: 0 0 6px rgba(255, 212, 0, 0.6); }
-
-@media (max-width: 720px) {
-  .hud { grid-template-columns: repeat(4, 1fr); }
-}
-
-/* ===== Redesign Task 6: home overlay (daily card + freeplay) ===== */
-.game-stage { position: relative; }
-
-.home-screen {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(8, 4, 16, 0.82);
-  backdrop-filter: blur(2px);
-}
-
-.home-screen.is-hidden { display: none; }
-
-.home-content {
-  width: min(420px, 90%);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.daily-card {
-  border: 2px solid rgba(255, 45, 149, 0.4);
-  border-radius: 14px;
-  background: rgba(22, 13, 40, 0.92);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: var(--glow-magenta);
-}
-
-.daily-tag {
-  margin: 0;
-  font-family: var(--pixel);
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: var(--yellow);
-  text-transform: uppercase;
-}
-
-.daily-sub { margin: 0; font-size: 12px; color: var(--ink-dim); }
-
-.daily-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.stat-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.stat-label {
-  font-family: var(--pixel);
-  font-size: 7px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-
-.stat-chip strong { font-family: var(--pixel); font-size: 16px; color: var(--cyan); }
-
-.freeplay-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border: 1px solid rgba(0, 240, 255, 0.2);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.freeplay-copy { display: flex; flex-direction: column; gap: 2px; }
-.freeplay-copy strong { font-size: 13px; color: var(--ink); }
-.freeplay-copy span { font-size: 10px; color: var(--ink-dim); }
-
-/* ===== Redesign Task 7: coin panel + physical arcade buttons ===== */
-.coin-panel {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 22px 4px;
-  flex-wrap: wrap;
-}
-
-.coin-panel .hint {
-  flex: 1 1 240px;
-  min-width: 200px;
-  font-size: 11px;
-  color: var(--ink-dim);
-  line-height: 1.5;
-}
-
-.primary-btn,
-.ghost-btn,
-.coin-end {
-  font-family: var(--pixel);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: none;
-  border-radius: 10px;
-  padding: 14px 18px;
-  cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-
-.primary-btn {
-  color: #061018;
-  background: linear-gradient(180deg, var(--cyan), #00b8cc);
-  box-shadow: 0 5px 0 #007a8a, var(--glow-cyan);
-}
-
-.primary-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 #007a8a, var(--glow-cyan); }
-.primary-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #007a8a, var(--glow-cyan); }
-
-.arcade-start {
-  background: linear-gradient(180deg, var(--lime), #1fbf0a);
-  box-shadow: 0 5px 0 #128000, 0 0 14px rgba(57, 255, 20, 0.5);
-}
-
-.ghost-btn,
-.coin-end {
-  color: var(--ink);
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  box-shadow: 0 4px 0 rgba(0, 240, 255, 0.2);
-}
-
-.ghost-btn:hover,
-.coin-end:hover { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 240, 255, 0.2); }
-
-.coin-end { border-color: rgba(255, 45, 149, 0.45); box-shadow: 0 4px 0 rgba(255, 45, 149, 0.25); }
-
-/* ===== Redesign Task 8: tidy profile popover ===== */
-.player-badge { position: relative; }
-
-.player-badge .profile-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.player-badge .profile-summary img {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.player-badge .profile-summary strong { font-size: 12px; color: var(--ink); }
-
-.player-badge .edit-profile {
-  font-family: var(--pixel);
-  font-size: 7px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--cyan);
-  background: none;
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  border-radius: 6px;
-  padding: 4px 6px;
-  cursor: pointer;
-}
-
-.player-badge .profile-popover {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  z-index: 20;
-  width: 260px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border: 2px solid rgba(0, 240, 255, 0.4);
-  border-radius: 12px;
-  background: var(--panel);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), var(--glow-cyan);
-}
-
-.player-badge .profile-popover label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-family: var(--pixel);
-  font-size: 7px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-
-.player-badge .profile-popover input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--ink);
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 8px;
-}
-
-.player-badge .profile-popover button[type="submit"] {
-  font-family: var(--pixel);
-  font-size: 9px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #061018;
-  background: linear-gradient(180deg, var(--cyan), #00b8cc);
-  border: none;
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-}
-
-@media (max-width: 720px) {
-  .player-badge .profile-popover { right: auto; left: 0; }
-}
-
-/* ===== Redesign Task 9: leaderboard ===== */
-.leaderboard-panel {
-  border: 2px solid rgba(0, 240, 255, 0.25);
-  border-radius: 16px;
-  background: var(--panel);
-  padding: 22px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.board-title {
-  margin: 0;
-  font-family: var(--pixel);
-  font-size: 16px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--magenta);
-  text-shadow: var(--glow-magenta);
-}
-
-.filters { display: flex; gap: 8px; }
-
-.filters input,
-.filters select {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink);
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
-.table-wrap { overflow-x: auto; }
-
-table { width: 100%; border-collapse: collapse; }
-
-thead th {
-  font-family: var(--pixel);
-  font-size: 7px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-  text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
-}
-
-tbody td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.rank-cell {
-  font-family: var(--pixel);
-  font-size: 12px;
-  color: var(--yellow);
-  width: 36px;
-}
-
-.player-cell { display: flex; align-items: center; gap: 10px; }
-.player-cell img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,0.1); }
-.player-cell strong { display: block; font-size: 13px; }
-.player-cell span { font-size: 10px; color: var(--ink-dim); }
-
-.score-cell { font-family: var(--pixel); font-size: 13px; color: var(--cyan); }
-
-.empty-state { text-align: center; color: var(--ink-dim); font-size: 12px; padding: 18px; }
-
-/* ===== Redesign Task 10: CRT overlay + reduced-motion + cleanup ===== */
-
-/* Neutralize the legacy full-page grid/scanline overlay so the new cabinet
-   CRT effect is the only one (avoids a busy double overlay). */
-body::before { display: none !important; }
-
-/* CRT scanlines + vignette on the cabinet frame (behind interactive content). */
-.cabinet::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: 18px;
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0,
-      rgba(0, 0, 0, 0) 2px,
-      rgba(0, 0, 0, 0.12) 3px
-    ),
-    radial-gradient(circle at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.4));
-  z-index: 5;
-}
-
-.cabinet > * { position: relative; z-index: 6; }
-
-@media (prefers-reduced-motion: reduce) {
-  .marquee-title { animation: none; }
-  .primary-btn,
-  .ghost-btn,
-  .coin-end { transition: none; }
-}
-
-/* ===== Use the retro-home-frame asset as the play-area frame =====
-   The SF cabinet frame art is the dominant visual, so the drawn cabinet
-   border + CRT scanlines step aside to avoid a double frame. The marquee
-   (title) sits above the frame, the coin panel below — matching the
-   original arcade layout. */
-.cabinet {
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  overflow: visible;
-}
-
-.cabinet::after { display: none; }
-
-.marquee {
-  background: transparent;
-  border-bottom: none;
-}
-
-.hud {
-  border-radius: 10px;
-  border: 1px solid rgba(126, 255, 229, 0.28);
-  margin: 0 8px;
-}
-
-/* Frame the whole play stage (canvas + home overlay) with the asset. */
-.game-stage {
-  padding: clamp(14px, 3.2vw, 34px);
-  background:
-    linear-gradient(180deg, rgba(3, 10, 14, 0.12), rgba(3, 10, 14, 0.28)),
-    url("assets/retro-home-frame.png") center / 100% 100% no-repeat;
-}
-
-.game-stage canvas {
-  border-radius: 6px;
-}
-
-/* Home overlay sits inside the frame's inner safe area; let the frame art
-   show through instead of a flat fill. */
-.home-screen {
-  background: linear-gradient(180deg, rgba(3, 8, 14, 0.32), rgba(3, 8, 14, 0.62));
-  backdrop-filter: none;
-  inset: clamp(14px, 3.2vw, 34px);
-  border-radius: 8px;
-  padding: clamp(20px, 4vw, 48px);
+.player-badge form.profile-popover button[type="submit"] {
+  width: 100% !important;
 }

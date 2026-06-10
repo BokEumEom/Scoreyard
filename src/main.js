@@ -7,7 +7,6 @@ import { PROFILE_ID, RUN_SECONDS } from "./core/config.js";
 import { openDb, getStore, makeId } from "./store/db.js";
 import { varietyFrames, bossVariantFrames, arenaPropFrames } from "./data/sprites.js";
 import { distance, formatDate } from "./util/mathx.js";
-import { paceDelta } from "./util/pace.js";
 import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
 import { canvas, ctx } from "./core/dom.js";
 import { keys } from "./core/input.js";
@@ -30,7 +29,8 @@ import {
   drawParticles,
   drawFloatingTexts,
   drawOverlay,
-  drawBossBar
+  drawBossBar,
+  drawHud
 } from "./render/draw.js";
 
   const profileForm = document.getElementById("profileForm");
@@ -87,8 +87,11 @@ import {
   setRedraw(drawScene);
   setOnRunEnd(endRun); // the loop calls this when a run finishes (time up / hull gone)
 
-  // The player HUD lives in the DOM bar (#hudBar); shown only while playing.
-  const hudBar = document.getElementById("hudBar");
+  // The player HUD is now drawn on the canvas (drawHud); hide the legacy DOM grid.
+  const legacyHud = document.querySelector(".hud");
+  if (legacyHud) {
+    legacyHud.style.display = "none";
+  }
 
   function visualUnit(key, salt) {
     return hashSeed(`${key}:${salt}`) / 0x100000000;
@@ -548,44 +551,10 @@ import {
     }
 
     drawBossBar();
-    updateHud();
+    drawHud();
 
     if (game.status !== "playing") {
       drawOverlay(message || "Start a run when ready");
-    }
-  }
-
-  function updateHud() {
-    const playing = game.status === "playing";
-    if (hudBar) {
-      hudBar.classList.toggle("is-hidden", !playing);
-    }
-    if (!playing) {
-      return;
-    }
-    const displayScore = Math.max(0, Math.round(game.score + game.health * 100));
-    const remain = Math.max(0, Math.ceil(RUN_SECONDS - game.elapsed));
-    const time = `${Math.floor(remain / 60)}:${String(remain % 60).padStart(2, "0")}`;
-
-    scoreValue.textContent = String(displayScore);
-    orbValue.textContent = String(game.orbCount);
-    healthValue.textContent = String(game.health);
-    timeValue.textContent = time;
-    comboValue.textContent = `×${game.combo}`;
-    shieldValue.textContent = String(game.shield);
-
-    healthValue.classList.toggle("is-low", game.health <= 1);
-    timeValue.classList.toggle("is-low", remain <= 10);
-    comboValue.classList.toggle("is-hot", game.combo > 1);
-
-    const delta = currentBestCurve ? paceDelta(currentBestCurve, game.elapsed, displayScore) : null;
-    if (delta === null) {
-      paceValue.textContent = "—";
-      paceValue.classList.remove("is-low", "is-hot");
-    } else {
-      paceValue.textContent = delta > 0 ? `+${delta}` : String(delta);
-      paceValue.classList.toggle("is-low", delta < 0);
-      paceValue.classList.toggle("is-hot", delta >= 0);
     }
   }
 
@@ -737,7 +706,7 @@ import {
       .slice(0, 50);
 
     scoreRows.innerHTML = "";
-    visibleScores.forEach((score, index) => {
+    visibleScores.forEach(score => {
       const row = scoreRowTemplate.content.firstElementChild.cloneNode(true);
       const avatar = row.querySelector("img");
       const name = row.querySelector(".player-cell strong");
@@ -748,11 +717,10 @@ import {
       avatar.alt = `${score.playerName} avatar`;
       name.textContent = score.playerName;
       email.textContent = score.maxCombo ? `×${score.maxCombo} combo` : "";
-      cells[0].textContent = String(index + 1);
-      cells[2].textContent = String(score.score);
-      cells[3].textContent = String(score.orbs);
-      cells[4].textContent = `${score.seconds}s`;
-      cells[5].textContent = formatDate(score.createdAt);
+      cells[1].textContent = String(score.score);
+      cells[2].textContent = String(score.orbs);
+      cells[3].textContent = `${score.seconds}s`;
+      cells[4].textContent = formatDate(score.createdAt);
       scoreRows.appendChild(row);
     });
 
@@ -767,7 +735,7 @@ import {
   if (editProfile) {
     editProfile.addEventListener("click", () => {
       const open = profileForm.style.display !== "none";
-      profileForm.style.display = open ? "none" : "flex";
+      profileForm.style.display = open ? "none" : "grid";
       editProfile.textContent = open ? "Edit" : "Close";
       if (!open) {
         playerNameInput.focus();
