@@ -1288,3 +1288,83 @@ body {
 @media (max-width: 720px) {
   .hud { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ===== Redesign Task 6: home overlay (daily card + freeplay) ===== */
+.game-stage { position: relative; }
+
+.home-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 4, 16, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.home-screen.is-hidden { display: none; }
+
+.home-content {
+  width: min(420px, 90%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.daily-card {
+  border: 2px solid rgba(255, 45, 149, 0.4);
+  border-radius: 14px;
+  background: rgba(22, 13, 40, 0.92);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--glow-magenta);
+}
+
+.daily-tag {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--yellow);
+  text-transform: uppercase;
+}
+
+.daily-sub { margin: 0; font-size: 12px; color: var(--ink-dim); }
+
+.daily-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.stat-label {
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.stat-chip strong { font-family: var(--pixel); font-size: 16px; color: var(--cyan); }
+
+.freeplay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.freeplay-copy { display: flex; flex-direction: column; gap: 2px; }
+.freeplay-copy strong { font-size: 13px; color: var(--ink); }
+.freeplay-copy span { font-size: 10px; color: var(--ink-dim); }
