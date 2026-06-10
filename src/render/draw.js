@@ -593,3 +593,29 @@ export function drawArenaProps() {
     ctx.restore();
   });
 }
+
+export function drawBossBar() {
+  const boss = game.boss;
+  if (!boss) {
+    return;
+  }
+  const w = canvas.width * 0.6;
+  const x = (canvas.width - w) / 2;
+  const y = 16;
+  const h = 12;
+  const pct = Math.max(0, boss.health / boss.maxHealth);
+  ctx.save();
+  ctx.fillStyle = "rgba(8, 16, 20, 0.72)";
+  ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+  ctx.fillStyle = boss.phase === 2 ? "#ff7a45" : "#e2b93b";
+  ctx.fillRect(x, y, w * pct, h);
+  ctx.strokeStyle = "rgba(226, 185, 59, 0.85)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = "#e9f6f1";
+  ctx.font = "700 11px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(`CORE WARDEN${boss.phase === 2 ? " — OVERDRIVE" : ""}`, canvas.width / 2, y - 4);
+  ctx.restore();
+}

@@ -38,6 +38,7 @@ import {
   addFloatingText,
   updateEffects
 } from "./game/effects.js";
+import { spawnBoss, updateBoss, updateLasers, damageBoss } from "./game/boss.js";
 import { assets, setRedraw } from "./render/assets.js";
 import {
   imageReady,
@@ -61,7 +62,8 @@ import {
   drawShockwaves,
   drawParticles,
   drawFloatingTexts,
-  drawOverlay
+  drawOverlay,
+  drawBossBar
 } from "./render/draw.js";
 
 const FIRE_RANGE = 320; // px: auto-aim acquisition radius
@@ -540,7 +542,9 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
   function updateWeapons(dt) {
     game.fireTimer = Math.max(0, game.fireTimer - dt);
 
-    const target = acquireTarget(game.player, game.hazards, FIRE_RANGE);
+    // Auto-aim considers enemies and the boss, so bolts engage the boss directly.
+    const targets = game.boss ? game.hazards.concat(game.boss) : game.hazards;
+    const target = acquireTarget(game.player, targets, FIRE_RANGE);
     if (target && game.fireTimer <= 0) {
       game.bolts.push(createBolt(game.player, target, BOLT_SPEED, boltDamage(game.combo)));
       game.fireTimer = fireInterval(game.combo);
@@ -567,6 +571,12 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
         if (hazard.hp <= 0) {
           killEnemy(hazard);
         }
+        return false;
+      }
+
+      if (game.boss && Math.hypot(game.boss.x - bolt.x, game.boss.y - bolt.y) < game.boss.r + bolt.r) {
+        damageBoss(bolt.damage);
+        spawnFx("bossImpact", bolt.x, bolt.y, 30, 0.22);
         return false;
       }
 
@@ -831,78 +841,6 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     }
   }
 
-  function spawnBoss() {
-    audio.sfx.boss();
-    game.bossSpawned = true;
-    game.boss = {
-      x: canvas.width / 2,
-      y: 88,
-      r: 48,
-      health: 36,
-      maxHealth: 36,
-      angle: 0,
-      laserTimer: 2.1,
-      summonTimer: 2.8
-    };
-    game.flash = 0.8;
-    game.shake = 12;
-    addFloatingText("Core Warden", canvas.width / 2, 92, "#e2b93b", 1.4);
-    spawnShockwave(canvas.width / 2, 92, "#e2b93b", 180, 0.9);
-  }
-
-  function updateBoss(dt) {
-    if (!game.boss) {
-      return;
-    }
-
-    const boss = game.boss;
-    boss.angle += dt * 0.8;
-    boss.x = canvas.width / 2 + Math.sin(game.worldTime * 0.9) * 150;
-    boss.y = 92 + Math.sin(game.worldTime * 1.4) * 18;
-    boss.laserTimer -= dt;
-    boss.summonTimer -= dt;
-
-    if (boss.laserTimer <= 0) {
-      spawnLaser();
-      boss.laserTimer = 3.3;
-    }
-
-    if (boss.summonTimer <= 0) {
-      game.hazards.push(makeHazard(weightedPick([
-        ["chaser", 2],
-        ["dasher", 2],
-        ["orbiter", 1]
-      ])));
-      boss.summonTimer = 4.2;
-    }
-  }
-
-  function spawnLaser() {
-    const angle = Math.atan2(game.player.y - game.boss.y, game.player.x - game.boss.x);
-    const length = canvas.width * 1.25;
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-
-    game.lasers.push({
-      x1: cx - Math.cos(angle) * length,
-      y1: cy - Math.sin(angle) * length,
-      x2: cx + Math.cos(angle) * length,
-      y2: cy + Math.sin(angle) * length,
-      warmup: 0.78,
-      life: 1.18,
-      width: 13
-    });
-    addFloatingText("Laser sweep", canvas.width / 2, 46, "#ff7a45", 0.82);
-  }
-
-  function updateLasers(dt) {
-    game.lasers = game.lasers.filter(laser => {
-      laser.warmup -= dt;
-      laser.life -= dt;
-      return laser.life > 0;
-    });
-  }
-
   function findCollision() {
     const hazard = game.hazards.find(item => distance(game.player, item) < game.player.r + item.r);
 
@@ -969,10 +907,7 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
       spawnBurst(orb.x, orb.y, "#e2b93b", 7);
     }
 
-    if (game.boss) {
-      damageBoss(1 + Math.floor(game.combo / 3));
-    }
-
+    // Boss damage now comes from auto-fire bolts (updateWeapons), not orb pickups.
     addFloatingText(`+${Math.round(gain)}`, orb.x, orb.y - 20, "#2cf28f", 1.08);
   }
 
@@ -1022,28 +957,6 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     game.shake = 16;
     game.flash = 0.85;
     addFloatingText(`Cleared ${removed}`, x, y - 36, "#ff7a45", 1.1);
-  }
-
-  function damageBoss(amount) {
-    if (!game.boss) {
-      return;
-    }
-
-    game.boss.health -= amount;
-    triggerHitstop(0.05); // E3: punchy freeze on each boss hit
-    addFloatingText(`Boss -${amount}`, game.boss.x, game.boss.y - 42, "#e2b93b", 0.82);
-
-    if (game.boss.health <= 0) {
-      game.score += 1800;
-      triggerHitstop(0.2); // E3: big freeze on the kill
-      addFloatingText("Boss broken +1800", canvas.width / 2, 92, "#e2b93b", 1.45);
-      spawnBurst(game.boss.x, game.boss.y, "#e2b93b", 58);
-      spawnShockwave(game.boss.x, game.boss.y, "#e2b93b", 240, 0.9);
-      game.boss = null;
-      game.lasers = [];
-      game.flash = 1;
-      game.shake = 20;
-    }
   }
 
   function updateHud() {
@@ -1105,6 +1018,8 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
     }
+
+    drawBossBar();
 
     if (game.status !== "playing") {
       const prompt = profile.name && profile.email
