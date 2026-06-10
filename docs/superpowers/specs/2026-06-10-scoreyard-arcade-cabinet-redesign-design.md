@@ -80,9 +80,9 @@ ranked table …
 ### In-game HUD
 - Canvas **top bar** (DOM HUD): SCORE · ORBS · HP (segmented) · TIME · COMBO ·
   SHIELD · PACE. Pixel-font labels + vivid values. HP rendered as segment blocks.
-- Note: current build renders HUD inside the canvas. This redesign moves it to a
-  DOM bar above the canvas. (Implementation plan to confirm interplay with the
-  existing in-canvas HUD from the combat phase — keep one source of truth.)
+- **Confirmed:** migrate HUD from in-canvas rendering (added in the combat phase)
+  to this DOM top bar. The DOM HUD becomes the single source of truth; the
+  in-canvas HUD draw is removed and `main.js` updates the DOM elements each frame.
 
 ### Profile editing (tidied inline popover)
 - `EDIT` on the player chip opens an aligned popover below the chip.
