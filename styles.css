@@ -155,9 +155,7 @@ button:disabled {
   z-index: 1;
 }
 
-.game-panel,
-.leaderboard-panel,
-.profile-card {
+.leaderboard-panel {
   background:
     linear-gradient(180deg, rgba(10, 31, 34, 0.96), rgba(3, 12, 15, 0.94)),
     radial-gradient(circle at top right, rgba(255, 77, 225, 0.11), transparent 26rem),
@@ -169,9 +167,7 @@ button:disabled {
   position: relative;
 }
 
-.game-panel::before,
-.leaderboard-panel::before,
-.profile-card::before {
+.leaderboard-panel::before {
   background:
     linear-gradient(90deg, transparent, rgba(126, 255, 229, 0.16), transparent),
     repeating-linear-gradient(
@@ -188,14 +184,11 @@ button:disabled {
   position: absolute;
 }
 
-.game-panel > *,
-.leaderboard-panel > *,
-.profile-card > * {
+.leaderboard-panel > * {
   position: relative;
   z-index: 1;
 }
 
-.game-panel,
 .leaderboard-panel {
   padding: 24px;
 }
@@ -205,42 +198,21 @@ button:disabled {
   max-width: 1080px;
 }
 
-.topbar,
 .section-head,
-.controls-row,
 .hud,
 .filters,
-.avatar-preview,
 .player-cell {
   display: flex;
   align-items: center;
 }
 
-.topbar,
 .section-head {
   gap: 18px;
   margin-bottom: 18px;
 }
 
-.topbar {
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-
 .section-head {
   justify-content: space-between;
-}
-
-.eyebrow {
-  color: var(--gold);
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  margin: 0 0 0.28rem;
-  text-shadow: 0 0 16px rgba(247, 214, 74, 0.38);
-  text-transform: uppercase;
 }
 
 h1,
@@ -285,19 +257,6 @@ h2 {
   white-space: nowrap;
 }
 
-.play-layout {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: center;
-}
-
-.arena-wrap {
-  margin: 0 auto;
-  min-width: 0;
-  width: min(100%, 960px);
-}
-
 .game-stage {
   position: relative;
 }
@@ -338,25 +297,6 @@ h2 {
   font-family: var(--mono);
   font-size: 1.35rem;
   text-shadow: 0 0 16px rgba(126, 255, 229, 0.42);
-}
-
-.hud-pop {
-  animation: hud-pop 0.42s ease;
-}
-
-@keyframes hud-pop {
-  0% {
-    transform: scale(1);
-  }
-
-  45% {
-    color: var(--gold);
-    transform: scale(1.24);
-  }
-
-  100% {
-    transform: scale(1);
-  }
 }
 
 canvas {
@@ -424,16 +364,6 @@ canvas {
   text-shadow: 0 0 18px rgba(44, 242, 143, 0.55);
 }
 
-.home-kicker {
-  color: var(--gold);
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  margin: 0 0 0.45rem;
-  text-transform: uppercase;
-}
-
 .home-content h2 {
   color: #fafeff;
   font-family: var(--mono);
@@ -482,17 +412,9 @@ canvas {
     0 0 24px rgba(44, 242, 143, 0.5);
 }
 
-.controls-row {
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 12px;
-}
-
 .hint,
 .empty-state,
-.player-cell span,
-.avatar-preview span {
+.player-cell span {
   color: var(--muted);
   font-size: 0.92rem;
 }
@@ -503,28 +425,8 @@ canvas {
   max-width: 640px;
 }
 
-.profile-card {
-  box-shadow: var(--shadow);
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(144px, max-content) minmax(0, 1fr);
-  align-items: center;
-  padding: 14px;
-  width: min(100%, 1080px);
-}
-
-.profile-card h2 {
-  font-size: 1.05rem;
-  margin: 0;
-  white-space: nowrap;
-}
-
 .profile-heading {
   min-width: 144px;
-}
-
-.profile-heading .eyebrow {
-  margin-bottom: 0.2rem;
 }
 
 form {
@@ -537,11 +439,6 @@ form {
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(220px, 1.05fr) minmax(180px, 0.95fr) minmax(230px, 1.15fr) minmax(150px, auto);
-}
-
-.profile-form .avatar-preview {
-  align-self: stretch;
-  grid-row: 1 / span 2;
 }
 
 .profile-form .avatar-picker {
@@ -611,17 +508,6 @@ input[type="file"]::file-selector-button {
   text-transform: uppercase;
 }
 
-.avatar-preview {
-  background:
-    linear-gradient(180deg, rgba(3, 12, 15, 0.72), rgba(8, 30, 31, 0.72)),
-    radial-gradient(circle at left, rgba(255, 77, 225, 0.12), transparent 70%);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  gap: 12px;
-  padding: 10px;
-}
-
-.avatar-preview img,
 .player-cell img {
   background:
     radial-gradient(circle at 35% 30%, var(--teal-strong), transparent 36%),
@@ -635,30 +521,16 @@ input[type="file"]::file-selector-button {
   object-fit: cover;
 }
 
-.avatar-preview img {
-  height: 58px;
-  width: 58px;
-}
-
-.profile-form .avatar-preview img {
-  height: 48px;
-  width: 48px;
-}
-
-.avatar-preview div,
 .player-cell div {
   min-width: 0;
 }
 
-.avatar-preview strong,
-.avatar-preview span,
 .player-cell strong,
 .player-cell span {
   display: block;
   overflow-wrap: anywhere;
 }
 
-.avatar-preview strong,
 .player-cell strong {
   color: var(--ink);
 }
@@ -757,11 +629,6 @@ th {
 }
 
 @media (max-width: 1100px) {
-  .profile-card {
-    align-items: stretch;
-    grid-template-columns: 1fr;
-  }
-
   .profile-heading {
     align-items: end;
     display: flex;
@@ -769,17 +636,8 @@ th {
     min-width: 0;
   }
 
-  .profile-heading .eyebrow {
-    margin: 0;
-  }
-
   .profile-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .profile-form .avatar-preview {
-    grid-column: 1 / -1;
-    grid-row: auto;
   }
 
   .profile-form .avatar-picker {
@@ -796,10 +654,6 @@ th {
 }
 
 @media (max-width: 900px) {
-  .play-layout {
-    grid-template-columns: 1fr;
-  }
-
   .hud {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -811,27 +665,17 @@ th {
     width: min(100% - 20px, 1180px);
   }
 
-  .game-panel,
   .leaderboard-panel {
     padding: 14px;
   }
 
-  .topbar,
   .section-head {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .topbar {
-    align-items: center;
-  }
-
   .storage-status {
     width: fit-content;
-  }
-
-  .profile-card {
-    padding: 12px;
   }
 
   .profile-heading {
@@ -844,12 +688,7 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .profile-form .avatar-preview {
-    grid-column: auto;
-  }
-
-  .profile-form button[type="submit"],
-  .controls-row button {
+  .profile-form button[type="submit"] {
     width: 100%;
   }
 
