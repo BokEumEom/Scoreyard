@@ -1,63 +1,27 @@
-// app.js — Scoreyard game (ES module).
-// Gameplay randomness routes through the seeded rng (rng.js) so the Daily
-// Challenge can be deterministic; cosmetic randomness (stars, death particles,
-// screen-shake) and makeId stay on Math.random. seed.js (UTC daily seed) is
-// wired in when the Daily Challenge UI lands.
 import * as rng from "./core/rng.js";
 import { hashSeed, utcDateKey } from "./core/seed.js";
 import { normalizeProfile, recordRun, todayBest, playedToday } from "./store/store.js";
 import * as audio from "./audio/audio.js";
 import { buildShareString } from "./ui/share.js";
-import { paceDelta } from "./util/pace.js";
-import { PROFILE_ID, RUN_SECONDS, BOSS_START_SECONDS, MAX_HEALTH } from "./core/config.js";
+import { PROFILE_ID, RUN_SECONDS } from "./core/config.js";
 import { openDb, getStore, makeId } from "./store/db.js";
-import {
-  spriteFrames,
-  powerUpFrames,
-  enemyFrames,
-  varietyFrames,
-  bossVariantFrames,
-  arenaPropFrames,
-  powerUpConfig,
-  varietyPowerUpFrame,
-  combatFxFrames
-} from "./data/sprites.js";
-import { clamp, distance, distanceToSegment, formatDate } from "./util/mathx.js";
+import { varietyFrames, bossVariantFrames, arenaPropFrames } from "./data/sprites.js";
+import { distance, formatDate } from "./util/mathx.js";
 import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
-import { enemyConfig } from "./data/enemies.js";
-import { acquireTarget, fireInterval, boltDamage, createBolt } from "./game/weapons.js";
 import { canvas, ctx } from "./core/dom.js";
 import { keys } from "./core/input.js";
 import { game } from "./game/state.js";
-import { makeHazard, makeOrb, makePowerUp, weightedPick } from "./game/spawn.js";
-import {
-  triggerHitstop,
-  spawnFx,
-  updateFx,
-  spawnBurst,
-  spawnShockwave,
-  addFloatingText,
-  updateEffects
-} from "./game/effects.js";
-import { spawnBoss, updateBoss, updateLasers, damageBoss } from "./game/boss.js";
+import { makeHazard, makeOrb, makePowerUp } from "./game/spawn.js";
 import { updateGame, runScore, setOnRunEnd } from "./game/loop.js";
 import { assets, setRedraw } from "./render/assets.js";
 import {
   imageReady,
-  drawImageCover,
-  drawSprite,
-  drawSheetSprite,
   drawVarietySprite,
-  currentBackdrop,
   drawBackground,
   drawOrb,
   drawHazard,
-  drawDasherWarning,
-  drawEnemyTypeRing,
   drawPowerUp,
-  drawFallbackPowerUpIcon,
   drawLasers,
-  drawFx,
   drawFxLayer,
   drawBolts,
   drawBoss,
