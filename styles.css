@@ -989,3 +989,23 @@ th {
 #paceValue.pace-behind {
   color: var(--coral);
 }
+
+/* Compact profile card (Plan 5): avatar + name + Edit toggle. */
+.profile-summary {
+  align-items: center;
+}
+.profile-summary .edit-profile {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(140, 220, 200, 0.35);
+  background: rgba(20, 40, 38, 0.6);
+  color: #cdeee4;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.profile-summary .edit-profile:hover {
+  background: rgba(30, 60, 56, 0.85);
+}

@@ -94,21 +94,17 @@
               <p class="eyebrow">Player station</p>
               <h2 id="profile-title">Player profile</h2>
             </div>
-            <form id="profileForm" class="profile-form">
-              <div class="avatar-preview">
-                <img id="avatarPreview" alt="Current player avatar">
-                <div>
-                  <strong id="profileName">Guest player</strong>
-                  <span id="profileEmail">Add your workspace account</span>
-                </div>
+            <div class="avatar-preview profile-summary">
+              <img id="avatarPreview" alt="Current player avatar">
+              <div>
+                <strong id="profileName">Guest player</strong>
               </div>
+              <button type="button" id="editProfile" class="edit-profile">Edit</button>
+            </div>
+            <form id="profileForm" class="profile-form" style="display: none">
               <label>
-                Workspace name
-                <input id="playerName" name="playerName" autocomplete="name" required maxlength="40" placeholder="Alex Rivera">
-              </label>
-              <label>
-                Workspace email
-                <input id="playerEmail" name="playerEmail" autocomplete="email" type="email" required maxlength="80" placeholder="alex@company.com">
+                Display name
+                <input id="playerName" name="playerName" autocomplete="name" maxlength="40" placeholder="Alex Rivera">
               </label>
               <label class="avatar-picker">
                 Avatar upload

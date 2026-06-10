@@ -71,11 +71,10 @@ const FIRE_RANGE = 320; // px: auto-aim acquisition radius
 const BOLT_SPEED = 560; // px/s: bolt travel speed
   const profileForm = document.getElementById("profileForm");
   const playerNameInput = document.getElementById("playerName");
-  const playerEmailInput = document.getElementById("playerEmail");
   const avatarInput = document.getElementById("avatarInput");
   const avatarPreview = document.getElementById("avatarPreview");
   const profileName = document.getElementById("profileName");
-  const profileEmail = document.getElementById("profileEmail");
+  const editProfile = document.getElementById("editProfile");
   const storageStatus = document.getElementById("storageStatus");
   const scoreValue = document.getElementById("scoreValue");
   const orbValue = document.getElementById("orbValue");
@@ -204,7 +203,6 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     audio.setMuted(profile.muted);
     updateMuteButton();
     playerNameInput.value = profile.name || "";
-    playerEmailInput.value = profile.email || "";
     updateProfileUi();
   }
 
@@ -301,19 +299,19 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
 
   async function saveProfile() {
     const cleanName = playerNameInput.value.trim();
-    const cleanEmail = playerEmailInput.value.trim().toLowerCase();
 
     profile = {
       ...profile,
       id: PROFILE_ID,
       name: cleanName,
-      email: cleanEmail,
+      email: "", // email removed (Plan 5); kept empty for schema compatibility
       updatedAt: new Date().toISOString()
     };
 
     await getStore("profile", "readwrite", store => store.put(profile));
     updateProfileUi();
     renderScores();
+    profileForm.style.display = "none";
   }
 
   async function loadScores() {
@@ -323,14 +321,9 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
   }
 
   async function saveScore() {
-    if (!profile.name || !profile.email) {
-      return;
-    }
-
     const record = {
       id: makeId(),
-      playerName: profile.name,
-      playerEmail: profile.email,
+      playerName: profile.name || "Guest player",
       avatar: profile.avatar || "",
       score: runScore(),
       orbs: game.orbCount,
@@ -347,11 +340,9 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
 
   function updateProfileUi() {
     const name = profile.name || "Guest player";
-    const email = profile.email || "Add your workspace account";
     const avatar = profile.avatar || makeAvatarDataUrl(name);
 
     profileName.textContent = name;
-    profileEmail.textContent = email;
     avatarPreview.src = avatar;
     avatarImage = new Image();
     avatarImage.src = avatar;
@@ -1030,10 +1021,7 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     drawHud();
 
     if (game.status !== "playing") {
-      const prompt = profile.name && profile.email
-        ? "Start a run when ready"
-        : "Save a profile, then start a run";
-      drawOverlay(message || prompt);
+      drawOverlay(message || "Start a run when ready");
     }
   }
 
@@ -1172,14 +1160,13 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     const query = scoreSearch.value.trim().toLowerCase();
     const filter = scoreFilter.value;
     const today = new Date().toDateString();
-    const myEmail = profile.email || "";
+    const myName = profile.name || "Guest player";
 
     const visibleScores = scores
       .filter(score => {
         const matchesQuery = !query
-          || score.playerName.toLowerCase().includes(query)
-          || score.playerEmail.toLowerCase().includes(query);
-        const matchesMine = filter !== "mine" || score.playerEmail === myEmail;
+          || score.playerName.toLowerCase().includes(query);
+        const matchesMine = filter !== "mine" || score.playerName === myName;
         const matchesToday = filter !== "today" || new Date(score.createdAt).toDateString() === today;
         return matchesQuery && matchesMine && matchesToday;
       })
@@ -1196,7 +1183,7 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
       avatar.src = score.avatar || makeAvatarDataUrl(score.playerName);
       avatar.alt = `${score.playerName} avatar`;
       name.textContent = score.playerName;
-      email.textContent = score.playerEmail;
+      email.textContent = score.maxCombo ? `×${score.maxCombo} combo` : "";
       cells[1].textContent = String(score.score);
       cells[2].textContent = String(score.orbs);
       cells[3].textContent = `${score.seconds}s`;
@@ -1211,6 +1198,17 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     event.preventDefault();
     await saveProfile();
   });
+
+  if (editProfile) {
+    editProfile.addEventListener("click", () => {
+      const open = profileForm.style.display !== "none";
+      profileForm.style.display = open ? "none" : "grid";
+      editProfile.textContent = open ? "Edit" : "Close";
+      if (!open) {
+        playerNameInput.focus();
+      }
+    });
+  }
 
   avatarInput.addEventListener("change", async event => {
     const file = event.target.files && event.target.files[0];
