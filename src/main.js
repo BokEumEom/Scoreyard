@@ -63,7 +63,8 @@ import {
   drawParticles,
   drawFloatingTexts,
   drawOverlay,
-  drawBossBar
+  drawBossBar,
+  drawHud
 } from "./render/draw.js";
 
 const FIRE_RANGE = 320; // px: auto-aim acquisition radius
@@ -122,6 +123,12 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
   // ./core/dom.js, ./game/state.js, and ./render/assets.js (imported above).
   // setRedraw lets asset loads repaint without assets.js importing the renderer.
   setRedraw(drawScene);
+
+  // The player HUD is now drawn on the canvas (drawHud); hide the legacy DOM grid.
+  const legacyHud = document.querySelector(".hud");
+  if (legacyHud) {
+    legacyHud.style.display = "none";
+  }
 
   function visualUnit(key, salt) {
     return hashSeed(`${key}:${salt}`) / 0x100000000;
@@ -1020,6 +1027,7 @@ const BOLT_SPEED = 560; // px/s: bolt travel speed
     }
 
     drawBossBar();
+    drawHud();
 
     if (game.status !== "playing") {
       const prompt = profile.name && profile.email
