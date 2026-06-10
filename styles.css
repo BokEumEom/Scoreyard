@@ -1518,3 +1518,82 @@ body {
 @media (max-width: 720px) {
   .player-badge .profile-popover { right: auto; left: 0; }
 }
+
+/* ===== Redesign Task 9: leaderboard ===== */
+.leaderboard-panel {
+  border: 2px solid rgba(0, 240, 255, 0.25);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.board-title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--magenta);
+  text-shadow: var(--glow-magenta);
+}
+
+.filters { display: flex; gap: 8px; }
+
+.filters input,
+.filters select {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+
+thead th {
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.rank-cell {
+  font-family: var(--pixel);
+  font-size: 12px;
+  color: var(--yellow);
+  width: 36px;
+}
+
+.player-cell { display: flex; align-items: center; gap: 10px; }
+.player-cell img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,0.1); }
+.player-cell strong { display: block; font-size: 13px; }
+.player-cell span { font-size: 10px; color: var(--ink-dim); }
+
+.score-cell { font-family: var(--pixel); font-size: 13px; color: var(--cyan); }
+
+.empty-state { text-align: center; color: var(--ink-dim); font-size: 12px; padding: 18px; }

@@ -737,7 +737,7 @@ import {
       .slice(0, 50);
 
     scoreRows.innerHTML = "";
-    visibleScores.forEach(score => {
+    visibleScores.forEach((score, index) => {
       const row = scoreRowTemplate.content.firstElementChild.cloneNode(true);
       const avatar = row.querySelector("img");
       const name = row.querySelector(".player-cell strong");
@@ -748,10 +748,11 @@ import {
       avatar.alt = `${score.playerName} avatar`;
       name.textContent = score.playerName;
       email.textContent = score.maxCombo ? `×${score.maxCombo} combo` : "";
-      cells[1].textContent = String(score.score);
-      cells[2].textContent = String(score.orbs);
-      cells[3].textContent = `${score.seconds}s`;
-      cells[4].textContent = formatDate(score.createdAt);
+      cells[0].textContent = String(index + 1);
+      cells[2].textContent = String(score.score);
+      cells[3].textContent = String(score.orbs);
+      cells[4].textContent = `${score.seconds}s`;
+      cells[5].textContent = formatDate(score.createdAt);
       scoreRows.appendChild(row);
     });
 
