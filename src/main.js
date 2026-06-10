@@ -767,7 +767,7 @@ import {
   if (editProfile) {
     editProfile.addEventListener("click", () => {
       const open = profileForm.style.display !== "none";
-      profileForm.style.display = open ? "none" : "grid";
+      profileForm.style.display = open ? "none" : "flex";
       editProfile.textContent = open ? "Edit" : "Close";
       if (!open) {
         playerNameInput.focus();

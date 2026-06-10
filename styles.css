@@ -1160,19 +1160,19 @@ button:active,
 
 .topbar { position: relative; z-index: 30; }
 
+/* Edit popover: the JS toggles inline `display` (none ⇄ grid). The legacy
+   `display: grid !important` was removed because it beat the inline `display:none`
+   and forced the popover permanently open. These rules shape the OPEN (grid) state
+   as a tidy single column without touching `display`, so the inline none/grid
+   toggle keeps working. Visual styling comes from the Task 8 `.profile-popover` rules. */
 .player-badge form.profile-popover {
-  width: min(280px, 84vw) !important;
-  display: grid !important;
   grid-template-columns: 1fr !important;
+  width: min(260px, 84vw) !important;
   gap: 12px !important;
 }
-.player-badge form.profile-popover label {
-  width: 100% !important;
-}
+.player-badge form.profile-popover label { width: 100% !important; }
 .player-badge form.profile-popover input,
-.player-badge form.profile-popover button[type="submit"] {
-  width: 100% !important;
-}
+.player-badge form.profile-popover button[type="submit"] { width: 100% !important; }
 
 /* ===== Redesign Task 3: cabinet shell + marquee ===== */
 body {
@@ -1629,4 +1629,51 @@ body::before { display: none !important; }
   .primary-btn,
   .ghost-btn,
   .coin-end { transition: none; }
+}
+
+/* ===== Use the retro-home-frame asset as the play-area frame =====
+   The SF cabinet frame art is the dominant visual, so the drawn cabinet
+   border + CRT scanlines step aside to avoid a double frame. The marquee
+   (title) sits above the frame, the coin panel below — matching the
+   original arcade layout. */
+.cabinet {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.cabinet::after { display: none; }
+
+.marquee {
+  background: transparent;
+  border-bottom: none;
+}
+
+.hud {
+  border-radius: 10px;
+  border: 1px solid rgba(126, 255, 229, 0.28);
+  margin: 0 8px;
+}
+
+/* Frame the whole play stage (canvas + home overlay) with the asset. */
+.game-stage {
+  padding: clamp(14px, 3.2vw, 34px);
+  background:
+    linear-gradient(180deg, rgba(3, 10, 14, 0.12), rgba(3, 10, 14, 0.28)),
+    url("assets/retro-home-frame.png") center / 100% 100% no-repeat;
+}
+
+.game-stage canvas {
+  border-radius: 6px;
+}
+
+/* Home overlay sits inside the frame's inner safe area; let the frame art
+   show through instead of a flat fill. */
+.home-screen {
+  background: linear-gradient(180deg, rgba(3, 8, 14, 0.32), rgba(3, 8, 14, 0.62));
+  backdrop-filter: none;
+  inset: clamp(14px, 3.2vw, 34px);
+  border-radius: 8px;
+  padding: clamp(20px, 4vw, 48px);
 }
