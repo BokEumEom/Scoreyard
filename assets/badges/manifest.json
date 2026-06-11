@@ -1,0 +1,21 @@
+{
+  "atlas": "../achievement-badges.png",
+  "columns": 4,
+  "rows": 3,
+  "width": 1536,
+  "height": 1024,
+  "items": [
+    { "id": "first-launch", "label": "First Launch", "col": 0, "row": 0, "file": "first-launch.png" },
+    { "id": "daily-challenger", "label": "Daily Challenger", "col": 1, "row": 0, "file": "daily-challenger.png" },
+    { "id": "orb-collector", "label": "Orb Collector", "col": 2, "row": 0, "file": "orb-collector.png" },
+    { "id": "combo-master", "label": "Combo Master", "col": 3, "row": 0, "file": "combo-master.png" },
+    { "id": "shield-bearer", "label": "Shield Bearer", "col": 0, "row": 1, "file": "shield-bearer.png" },
+    { "id": "time-extender", "label": "Time Extender", "col": 1, "row": 1, "file": "time-extender.png" },
+    { "id": "enemy-hunter", "label": "Enemy Hunter", "col": 2, "row": 1, "file": "enemy-hunter.png" },
+    { "id": "sentinel-breaker", "label": "Sentinel Breaker", "col": 3, "row": 1, "file": "sentinel-breaker.png" },
+    { "id": "core-warden-defeated", "label": "Core Warden Defeated", "col": 0, "row": 2, "file": "core-warden-defeated.png" },
+    { "id": "untouchable", "label": "Untouchable", "col": 1, "row": 2, "file": "untouchable.png" },
+    { "id": "score-ace", "label": "Score Ace", "col": 2, "row": 2, "file": "score-ace.png" },
+    { "id": "arcade-legend", "label": "Arcade Legend", "col": 3, "row": 2, "file": "arcade-legend.png" }
+  ]
+}

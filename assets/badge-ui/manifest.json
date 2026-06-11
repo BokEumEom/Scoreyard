@@ -1,0 +1,21 @@
+{
+  "atlas": "../badge-ui-kit.png",
+  "columns": 4,
+  "rows": 3,
+  "width": 1536,
+  "height": 1024,
+  "items": [
+    { "id": "frame-bronze", "col": 0, "row": 0, "file": "frame-bronze.png" },
+    { "id": "frame-silver", "col": 1, "row": 0, "file": "frame-silver.png" },
+    { "id": "frame-gold", "col": 2, "row": 0, "file": "frame-gold.png" },
+    { "id": "frame-prismatic", "col": 3, "row": 0, "file": "frame-prismatic.png" },
+    { "id": "state-locked", "col": 0, "row": 1, "file": "state-locked.png" },
+    { "id": "progress-empty", "col": 1, "row": 1, "file": "progress-empty.png" },
+    { "id": "progress-near-complete", "col": 2, "row": 1, "file": "progress-near-complete.png" },
+    { "id": "earned-burst", "col": 3, "row": 1, "file": "earned-burst.png" },
+    { "id": "collection-slot", "col": 0, "row": 2, "file": "collection-slot.png" },
+    { "id": "showcase-pedestal", "col": 1, "row": 2, "file": "showcase-pedestal.png" },
+    { "id": "earned-toast", "col": 2, "row": 2, "file": "earned-toast.png" },
+    { "id": "detail-card", "col": 3, "row": 2, "file": "detail-card.png" }
+  ]
+}
