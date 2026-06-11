@@ -126,8 +126,7 @@ button:disabled {
 }
 
 .game-panel,
-.leaderboard-panel,
-.profile-card {
+.leaderboard-panel {
   background:
     linear-gradient(180deg, rgba(10, 31, 34, 0.96), rgba(3, 12, 15, 0.94)),
     radial-gradient(circle at top right, rgba(255, 77, 225, 0.11), transparent 26rem),
@@ -140,8 +139,7 @@ button:disabled {
 }
 
 .game-panel::before,
-.leaderboard-panel::before,
-.profile-card::before {
+.leaderboard-panel::before {
   background:
     linear-gradient(90deg, transparent, rgba(126, 255, 229, 0.16), transparent),
     repeating-linear-gradient(
@@ -159,8 +157,7 @@ button:disabled {
 }
 
 .game-panel > *,
-.leaderboard-panel > *,
-.profile-card > * {
+.leaderboard-panel > * {
   position: relative;
   z-index: 1;
 }
@@ -425,26 +422,6 @@ canvas {
   max-width: 440px;
 }
 
-.home-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin: 0 0 1.2rem;
-}
-
-.home-chips span {
-  background: rgba(7, 24, 23, 0.72);
-  border: 1px solid rgba(199, 244, 223, 0.46);
-  border-radius: 999px;
-  color: #fafeff;
-  font-family: var(--mono);
-  font-size: 0.74rem;
-  font-weight: 900;
-  padding: 0.42rem 0.68rem;
-  text-transform: uppercase;
-}
-
 .arcade-start {
   border-color: var(--gold);
   box-shadow:
@@ -471,30 +448,6 @@ canvas {
   flex: 1 1 260px;
   line-height: 1.5;
   max-width: 640px;
-}
-
-.profile-card {
-  box-shadow: var(--shadow);
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(144px, max-content) minmax(0, 1fr);
-  align-items: center;
-  padding: 14px;
-  width: min(100%, 1080px);
-}
-
-.profile-card h2 {
-  font-size: 1.05rem;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.profile-heading {
-  min-width: 144px;
-}
-
-.profile-heading .eyebrow {
-  margin-bottom: 0.2rem;
 }
 
 form {
@@ -727,22 +680,6 @@ th {
 }
 
 @media (max-width: 1100px) {
-  .profile-card {
-    align-items: stretch;
-    grid-template-columns: 1fr;
-  }
-
-  .profile-heading {
-    align-items: end;
-    display: flex;
-    gap: 12px;
-    min-width: 0;
-  }
-
-  .profile-heading .eyebrow {
-    margin: 0;
-  }
-
   .profile-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -798,16 +735,6 @@ th {
 
   .storage-status {
     width: fit-content;
-  }
-
-  .profile-card {
-    padding: 12px;
-  }
-
-  .profile-heading {
-    align-items: flex-start;
-    display: grid;
-    gap: 4px;
   }
 
   .profile-form {
@@ -1132,7 +1059,6 @@ button:active,
 
 .player-badge form.profile-popover {
   width: min(280px, 84vw) !important;
-  display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 12px !important;
 }
@@ -1143,3 +1069,191 @@ button:active,
 .player-badge form.profile-popover button[type="submit"] {
   width: 100% !important;
 }
+
+/* ===== Retro UI kit — 9-slice frame system =====
+   Layout safe-zone comes from border-width; border-image paints the frame
+   into that zone (slice values are source-px insets measured per asset). */
+:root {
+  --ui-modal-panel: url("assets/ui/modal-panel.png");
+  --ui-hud-capsule: url("assets/ui/hud-stat-capsule.png");
+  --ui-score-plaque: url("assets/ui/score-plaque.png");
+  --ui-icon-square: url("assets/ui/button-icon-square.png");
+  --ui-leader-row: url("assets/ui/leaderboard-row.png");
+  --ui-profile-card: url("assets/ui/profile-card.png");
+  --ui-daily-badge: url("assets/ui/daily-badge.png");
+
+  /* source 408x265 */
+  --slice-modal: 52;
+  --biw-modal: 26px;
+  /* source 286x92 */
+  --slice-capsule: 20 44;
+  --biw-capsule: 10px 22px;
+  /* source 376x135 */
+  --slice-plaque: 24 48;
+  --biw-plaque: 12px 24px;
+  /* source 170x161 */
+  --slice-icon: 34;
+  --biw-icon: 10px;
+  /* source 341x85 */
+  --slice-row: 16 32;
+  --biw-row: 8px 16px;
+  /* source 323x167; left slice keeps the circular avatar zone intact */
+  --slice-profile: 26 30 36 140;
+  --biw-profile: 8px 9px 10px 40px;
+}
+
+/* Modal frame: popover only — the home screen's hero frame is the
+   retro-home-frame backdrop, so the daily card stays flat to avoid nesting */
+.player-badge .profile-popover {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-modal);
+  border-image: var(--ui-modal-panel) var(--slice-modal) fill stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.48),
+    0 0 28px rgba(34, 215, 181, 0.22);
+  padding: 6px 2px;
+}
+
+/* Stat capsules: stat chips, ghost buttons (DOM .hud stays legacy-hidden) */
+.stat-chip,
+.ghost-btn,
+#endGame {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-capsule);
+  border-image: var(--ui-hud-capsule) var(--slice-capsule) fill stretch;
+  border-radius: 0;
+  background: none;
+}
+
+.stat-chip {
+  padding: 0.12rem 0.1rem;
+}
+
+.ghost-btn,
+#endGame {
+  color: var(--teal-strong);
+  padding: 0.1rem 0.35rem;
+}
+
+/* Primary CTA plaque */
+.primary-btn,
+.arcade-start {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-plaque);
+  border-image: var(--ui-score-plaque) var(--slice-plaque) fill stretch;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  padding: 0.3rem 0.55rem;
+  text-shadow:
+    0 0 8px rgba(126, 255, 229, 0.72),
+    0 2px 0 rgba(0, 0, 0, 0.42);
+}
+
+.primary-btn:hover,
+.arcade-start:hover {
+  filter: brightness(1.12);
+}
+
+.primary-btn:active,
+.arcade-start:active {
+  filter: brightness(1.25);
+  transform: translateY(2px);
+}
+
+/* Square icon buttons */
+.mute-toggle,
+.player-badge .edit-profile {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-icon);
+  border-image: var(--ui-icon-square) var(--slice-icon) fill stretch;
+  border-radius: 0;
+  background: none;
+}
+
+/* Daily emblem: fixed-aspect badge beside the tag text, never stretched */
+.daily-tag-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.daily-tag-row .daily-tag {
+  margin: 0;
+}
+
+.daily-emblem {
+  aspect-ratio: 314 / 140;
+  background: var(--ui-daily-badge) center / contain no-repeat;
+  filter: drop-shadow(0 0 6px rgba(34, 215, 181, 0.35));
+  flex: none;
+  width: 64px;
+}
+
+/* Profile summary: avatar nests in the asset's circular zone */
+.player-badge .profile-summary {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-profile);
+  border-image: var(--ui-profile-card) var(--slice-profile) fill stretch;
+  border-radius: 0;
+  background: none;
+  min-height: 48px;
+  padding: 2px 8px 2px 0;
+}
+
+.player-badge .profile-summary img {
+  border-radius: 50%;
+  margin-left: -34px;
+}
+
+/* Leaderboard: flat panel, framed data rows (grid rows so border-image works) */
+.table-wrap table {
+  border-collapse: separate;
+  display: block;
+  width: 100%;
+}
+
+.table-wrap thead,
+.table-wrap tbody {
+  display: block;
+}
+
+.table-wrap tr {
+  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(4, minmax(80px, 1fr));
+  min-width: 680px;
+}
+
+.table-wrap tbody {
+  display: grid;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.table-wrap td {
+  border-bottom: 0;
+}
+
+.leaderboard-panel tbody tr,
+.freeplay-row {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-row);
+  border-image: var(--ui-leader-row) var(--slice-row) fill stretch;
+  border-radius: 0;
+  background: none;
+}
+
+.freeplay-row {
+  padding: 0.15rem 0.3rem;
+}
+

@@ -77,7 +77,10 @@
                   <p class="home-kicker">Retro arcade run</p>
                   <h2>Scoreyard</h2>
                   <div class="daily-card">
-                    <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
+                    <div class="daily-tag-row">
+                      <span class="daily-emblem" aria-hidden="true"></span>
+                      <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
+                    </div>
                     <p class="daily-sub" id="dailySub">Everyone plays the same arena today.</p>
                     <div class="daily-stats">
                       <div class="stat-chip">
@@ -128,17 +131,17 @@
           </div>
         </div>
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Player</th>
-                <th scope="col">Score</th>
-                <th scope="col">Orbs</th>
-                <th scope="col">Length</th>
-                <th scope="col">Saved</th>
+          <table role="table">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th scope="col" role="columnheader">Player</th>
+                <th scope="col" role="columnheader">Score</th>
+                <th scope="col" role="columnheader">Orbs</th>
+                <th scope="col" role="columnheader">Length</th>
+                <th scope="col" role="columnheader">Saved</th>
               </tr>
             </thead>
-            <tbody id="scoreRows"></tbody>
+            <tbody id="scoreRows" role="rowgroup"></tbody>
           </table>
         </div>
         <p class="empty-state" id="emptyState">No scores yet. Start a run to seed the board.</p>
@@ -146,8 +149,8 @@
     </main>
 
     <template id="scoreRowTemplate">
-      <tr>
-        <td>
+      <tr role="row">
+        <td role="cell">
           <div class="player-cell">
             <img alt="">
             <div>
@@ -156,10 +159,10 @@
             </div>
           </div>
         </td>
-        <td class="score-cell"></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td class="score-cell" role="cell"></td>
+        <td role="cell"></td>
+        <td role="cell"></td>
+        <td role="cell"></td>
       </tr>
     </template>
 

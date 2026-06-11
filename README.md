@@ -84,6 +84,8 @@ http://127.0.0.1:51873/
 - `variety-atlas.png` — 플레이어·크리스털·적·파워업 변형 스프라이트 아틀라스
 - `variety-atlas-source-magenta.png` — `variety-atlas.png` 투명 처리 전 크로마키 원본
 - `retro-home-frame.png` — 레트로 홈 프레임
+- `retro-ui-kit.png` — 레트로 UI/UX 4x4 버튼·스코어·게이지 아틀라스
+- `ui/*.png` — `retro-ui-kit.png`에서 잘라낸 개별 UI 에셋(사용 중인 것만 유지)
 
 ## 게임플레이
 
