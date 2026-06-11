@@ -150,7 +150,7 @@ export function updateGame(dt) {
   updateFx(dt);
 
   if (game.elapsed >= RUN_SECONDS) {
-    onRunEnd();
+    onRunEnd("time");
   }
 }
 
@@ -357,7 +357,7 @@ export function takeHit(hit) {
   game.flash = 0.55;
 
   if (game.health <= 0) {
-    onRunEnd();
+    onRunEnd("down");
   }
 }
 

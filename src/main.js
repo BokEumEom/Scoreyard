@@ -7,6 +7,7 @@ import { PROFILE_ID, RUN_SECONDS } from "./core/config.js";
 import { openDb, getStore, makeId } from "./store/db.js";
 import { varietyFrames, bossVariantFrames, arenaPropFrames } from "./data/sprites.js";
 import { distance, formatDate } from "./util/mathx.js";
+import { paceDelta } from "./util/pace.js";
 import { makeAvatarDataUrl, compressAvatar } from "./ui/avatar.js";
 import { canvas, ctx } from "./core/dom.js";
 import { keys } from "./core/input.js";
@@ -29,26 +30,39 @@ import {
   drawParticles,
   drawFloatingTexts,
   drawOverlay,
-  drawBossBar,
-  drawHud
+  drawBossBar
 } from "./render/draw.js";
 
   const profileForm = document.getElementById("profileForm");
   const playerNameInput = document.getElementById("playerName");
   const avatarInput = document.getElementById("avatarInput");
   const avatarPreview = document.getElementById("avatarPreview");
+  const avatarPreviewLarge = document.getElementById("avatarPreviewLarge");
   const profileName = document.getElementById("profileName");
   const editProfile = document.getElementById("editProfile");
   const storageStatus = document.getElementById("storageStatus");
+  const hudBar = document.getElementById("hudBar");
   const scoreValue = document.getElementById("scoreValue");
-  const orbValue = document.getElementById("orbValue");
   const healthValue = document.getElementById("healthValue");
   const timeValue = document.getElementById("timeValue");
   const comboValue = document.getElementById("comboValue");
-  const shieldValue = document.getElementById("shieldValue");
   const paceValue = document.getElementById("paceValue");
+  const hudFx = document.getElementById("hudFx");
+  const hudMode = document.getElementById("hudMode");
   const startGameButton = document.getElementById("startGame");
   const homeScreen = document.getElementById("homeScreen");
+  const overScreen = document.getElementById("overScreen");
+  const overMode = document.getElementById("overMode");
+  const overReason = document.getElementById("overReason");
+  const overScore = document.getElementById("overScore");
+  const overBestBanner = document.getElementById("overBestBanner");
+  const overCombo = document.getElementById("overCombo");
+  const overOrbs = document.getElementById("overOrbs");
+  const overBoss = document.getElementById("overBoss");
+  const overBestLabel = document.getElementById("overBestLabel");
+  const overBest = document.getElementById("overBest");
+  const overRetryButton = document.getElementById("overRetry");
+  const overMenuButton = document.getElementById("overMenu");
   const homeStartGameButton = document.getElementById("homeStartGame");
   const freeStartGameButton = document.getElementById("freeStartGame");
   const endGameButton = document.getElementById("endGame");
@@ -87,11 +101,8 @@ import {
   setRedraw(drawScene);
   setOnRunEnd(endRun); // the loop calls this when a run finishes (time up / hull gone)
 
-  // The player HUD is now drawn on the canvas (drawHud); hide the legacy DOM grid.
-  const legacyHud = document.querySelector(".hud");
-  if (legacyHud) {
-    legacyHud.style.display = "none";
-  }
+  // Player HUD lives in the DOM bar above the canvas (design handoff);
+  // the canvas keeps only the boss bar and in-world effects.
 
   function visualUnit(key, salt) {
     return hashSeed(`${key}:${salt}`) / 0x100000000;
@@ -198,9 +209,6 @@ import {
         ? "Beat it, or jump into Free Play."
         : "Everyone plays the same arena today.";
     }
-    if (homeStartGameButton) {
-      homeStartGameButton.textContent = done ? "↻ Replay today" : "▶ Play today";
-    }
   }
 
   function updateMuteButton() {
@@ -258,7 +266,7 @@ import {
     }, 2000);
   }
 
-  async function saveProfile() {
+  async function saveProfile({ close = true } = {}) {
     const cleanName = playerNameInput.value.trim();
 
     profile = {
@@ -272,7 +280,9 @@ import {
     await getStore("profile", "readwrite", store => store.put(profile));
     updateProfileUi();
     renderScores();
-    profileForm.style.display = "none";
+    if (close) {
+      profileForm.style.display = "none";
+    }
   }
 
   async function loadScores() {
@@ -305,6 +315,9 @@ import {
 
     profileName.textContent = name;
     avatarPreview.src = avatar;
+    if (avatarPreviewLarge) {
+      avatarPreviewLarge.src = avatar;
+    }
     avatarImage = new Image();
     avatarImage.src = avatar;
     drawScene();
@@ -330,6 +343,7 @@ import {
     game.floatingTexts = [];
     game.boss = null;
     game.bossSpawned = false;
+    game.bossDefeated = false;
     game.score = 0;
     game.orbCount = 0;
     game.health = 3;
@@ -354,12 +368,7 @@ import {
     game.worldTime = 0;
     game.hitstop = 0;
     game.paceSamples = [];
-    scoreValue.textContent = "0";
-    orbValue.textContent = "0";
-    healthValue.textContent = "3";
-    timeValue.textContent = String(RUN_SECONDS);
-    comboValue.textContent = "x1";
-    shieldValue.textContent = "0";
+    updateHudBar();
     endGameButton.disabled = true;
     drawScene();
   }
@@ -372,6 +381,7 @@ import {
     await saveProfile();
     audio.unlock(); // started by a click — unlock/resume the AudioContext now
     audio.sfx.start();
+    hideOverScreen();
     if (shareResultButton) {
       shareResultButton.hidden = true;
     }
@@ -407,6 +417,7 @@ import {
     game.floatingTexts = [];
     game.boss = null;
     game.bossSpawned = false;
+    game.bossDefeated = false;
     game.score = 0;
     game.orbCount = 0;
     game.health = 3;
@@ -436,7 +447,7 @@ import {
     rafId = requestAnimationFrame(tick);
   }
 
-  async function endRun() {
+  async function endRun(reason = "time") {
     if (game.status !== "playing") {
       return;
     }
@@ -488,8 +499,41 @@ import {
       shareResultButton.textContent = "⧉ Copy result";
     }
 
+    showOverScreen(reason, finalScore, beatBest);
     refreshHome();
     drawScene(beatBest ? "NEW BEST!" : "Run saved");
+  }
+
+  // Game-over screen (design handoff): reason, final score, NEW BEST banner,
+  // run stats, and retry/share/menu actions.
+  function showOverScreen(reason, finalScore, beatBest) {
+    if (!overScreen) {
+      return;
+    }
+    overMode.textContent = currentMode === "daily" ? "Daily challenge" : "Free play";
+    overReason.textContent = reason === "down" ? "Drone destroyed" : "Time up";
+    overScore.textContent = String(finalScore);
+    overBestBanner.hidden = !beatBest;
+    overCombo.textContent = `×${game.maxCombo}`;
+    overOrbs.textContent = String(game.orbCount);
+    overBoss.textContent = game.bossDefeated
+      ? "Cleared ✦"
+      : game.bossSpawned
+        ? "Survived"
+        : "—";
+    overBestLabel.textContent = currentMode === "daily" ? "Today's best" : "All-time best";
+    overBest.textContent = String(
+      currentMode === "daily"
+        ? todayBest(profile, currentDateKey)
+        : profile.allTimeBest || 0
+    );
+    overScreen.classList.remove("is-hidden");
+  }
+
+  function hideOverScreen() {
+    if (overScreen) {
+      overScreen.classList.add("is-hidden");
+    }
   }
 
   // Hitstop (E3): briefly freeze game advancement for impact, keep rendering.
@@ -551,11 +595,76 @@ import {
     }
 
     drawBossBar();
-    drawHud();
+    updateHudBar();
 
     if (game.status !== "playing") {
       drawOverlay(message || "Start a run when ready");
     }
+  }
+
+  // DOM HUD bar (design handoff): time warning, score, combo, hull hearts,
+  // best-pace chip, and live power-up chips. Pure DOM writes — no canvas.
+  function updateHudBar() {
+    if (!hudBar) {
+      return;
+    }
+
+    const playing = game.status === "playing";
+    hudBar.classList.toggle("is-hidden", !playing && game.status !== "done");
+
+    const remain = Math.max(0, Math.ceil(RUN_SECONDS - game.elapsed));
+    timeValue.textContent = String(remain);
+    timeValue.classList.toggle("warn", playing && remain <= 10);
+
+    scoreValue.textContent = String(Math.max(0, Math.round(runScore())));
+    comboValue.textContent = `×${game.combo}`;
+    comboValue.classList.toggle("hot", game.combo >= 4);
+
+    const hearts = [];
+    for (let i = 0; i < 3; i += 1) {
+      hearts.push(i < game.health ? "◆" : "<span class='dim'>◆</span>");
+    }
+    for (let s = 0; s < game.shield; s += 1) {
+      hearts.push("<span class='shield'>◈</span>");
+    }
+    healthValue.innerHTML = hearts.join(" ");
+    healthValue.classList.toggle("low", playing && game.health <= 1);
+
+    const delta =
+      playing && currentMode === "daily" && currentBestCurve
+        ? paceDelta(currentBestCurve, game.elapsed, runScore())
+        : null;
+    paceValue.hidden = delta === null;
+    if (delta !== null) {
+      paceValue.textContent = `${delta >= 0 ? "+" : "−"}${Math.abs(Math.round(delta))} vs best`;
+      paceValue.classList.toggle("ahead", delta >= 0);
+      paceValue.classList.toggle("behind", delta < 0);
+    }
+
+    const chips = [];
+    if (game.shield > 0) {
+      chips.push(fxChip("SHIELD", "#49b6ff", game.shield > 1 ? `×${game.shield}` : ""));
+    }
+    if (game.magnetTimer > 0) {
+      chips.push(fxChip("MAGNET", "#b76cff", `${Math.ceil(game.magnetTimer)}s`));
+    }
+    if (game.scoreBoostTimer > 0) {
+      chips.push(fxChip("×2", "#f7d64a", `${Math.ceil(game.scoreBoostTimer)}s`));
+    }
+    if (game.phaseTimer > 0) {
+      chips.push(fxChip("PHASE", "#7ffff0", `${Math.ceil(game.phaseTimer)}s`));
+    }
+    hudFx.innerHTML = playing ? chips.join("") : "";
+
+    hudMode.textContent = playing
+      ? currentMode === "daily"
+        ? "DAILY"
+        : "FREE"
+      : "";
+  }
+
+  function fxChip(label, color, extra) {
+    return `<span class="fx-chip" style="--c:${color}">${label}${extra ? ` ${extra}` : ""}</span>`;
   }
 
   function syncHomeScreen(message) {
@@ -563,7 +672,8 @@ import {
       return;
     }
 
-    homeScreen.classList.toggle("is-hidden", game.status === "playing");
+    const overOpen = overScreen && !overScreen.classList.contains("is-hidden");
+    homeScreen.classList.toggle("is-hidden", game.status === "playing" || overOpen);
     homeScreen.dataset.state = game.status;
 
     if (message) {
@@ -752,7 +862,7 @@ import {
 
     try {
       profile.avatar = await compressAvatar(file);
-      await saveProfile();
+      await saveProfile({ close: false });
     } catch (error) {
       alert(error.message);
       avatarInput.value = "";
@@ -770,7 +880,17 @@ import {
   if (shareResultButton) {
     shareResultButton.addEventListener("click", copyShare);
   }
-  endGameButton.addEventListener("click", endRun);
+  if (overRetryButton) {
+    overRetryButton.addEventListener("click", () => startRun(currentMode));
+  }
+  if (overMenuButton) {
+    overMenuButton.addEventListener("click", () => {
+      hideOverScreen();
+      refreshHome();
+      drawScene();
+    });
+  }
+  endGameButton.addEventListener("click", () => endRun("time"));
   scoreSearch.addEventListener("input", renderScores);
   scoreFilter.addEventListener("change", renderScores);
 
@@ -778,11 +898,17 @@ import {
     canvas.setPointerCapture(event.pointerId);
     game.pointerActive = true;
     updatePointerTarget(event);
+    if (event.pointerType === "touch") {
+      showJoystick(event.clientX, event.clientY);
+    }
   });
 
   canvas.addEventListener("pointermove", event => {
     if (game.pointerActive) {
       updatePointerTarget(event);
+      if (event.pointerType === "touch") {
+        moveJoystick(event.clientX, event.clientY);
+      }
     }
   });
 
@@ -791,11 +917,52 @@ import {
       canvas.releasePointerCapture(event.pointerId);
     }
     game.pointerActive = false;
+    hideJoystick();
   });
 
   canvas.addEventListener("pointercancel", () => {
     game.pointerActive = false;
+    hideJoystick();
   });
+
+  // Touch joystick (design handoff): a visual ring at the touch origin with a
+  // knob that tracks the finger. Purely cosmetic — movement still flows through
+  // the existing pointer-target model in the game loop.
+  const joystick = document.getElementById("joystick");
+  const joystickKnob = document.getElementById("joystickKnob");
+  let joystickOrigin = { x: 0, y: 0 };
+
+  function showJoystick(clientX, clientY) {
+    if (!joystick) {
+      return;
+    }
+    joystickOrigin = { x: clientX, y: clientY };
+    joystick.style.left = `${clientX}px`;
+    joystick.style.top = `${clientY}px`;
+    joystick.classList.add("active");
+    moveJoystick(clientX, clientY);
+  }
+
+  function moveJoystick(clientX, clientY) {
+    if (!joystickKnob) {
+      return;
+    }
+    const maxRadius = 38;
+    let dx = clientX - joystickOrigin.x;
+    let dy = clientY - joystickOrigin.y;
+    const len = Math.hypot(dx, dy);
+    if (len > maxRadius) {
+      dx = (dx / len) * maxRadius;
+      dy = (dy / len) * maxRadius;
+    }
+    joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  }
+
+  function hideJoystick() {
+    if (joystick) {
+      joystick.classList.remove("active");
+    }
+  }
 
   window.addEventListener("keydown", event => {
     const key = event.key.toLowerCase();

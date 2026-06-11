@@ -113,6 +113,7 @@ export function damageBoss(amount) {
     spawnBurst(game.boss.x, game.boss.y, "#e2b93b", 58);
     spawnShockwave(game.boss.x, game.boss.y, "#e2b93b", 240, 0.9);
     game.boss = null;
+    game.bossDefeated = true;
     game.lasers = [];
     game.flash = 1;
     game.shake = 20;

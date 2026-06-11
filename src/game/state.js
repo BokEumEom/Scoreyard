@@ -20,6 +20,7 @@ export const game = {
   floatingTexts: [],
   boss: null,
   bossSpawned: false,
+  bossDefeated: false,
   score: 0,
   orbCount: 0,
   health: 3,

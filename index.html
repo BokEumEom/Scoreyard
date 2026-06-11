@@ -13,9 +13,9 @@
           <div>
             <p class="eyebrow">Sites game</p>
             <h1 id="game-title">Scoreyard</h1>
+            <div class="storage-status" id="storageStatus">Checking storage...</div>
           </div>
           <div class="topbar-right">
-            <div class="storage-status" id="storageStatus">Checking storage...</div>
             <div class="player-badge">
               <div class="profile-summary">
                 <img id="avatarPreview" alt="Current player avatar">
@@ -27,10 +27,13 @@
                   Display name
                   <input id="playerName" name="playerName" autocomplete="name" maxlength="40" placeholder="Alex Rivera">
                 </label>
-                <label class="avatar-picker">
-                  Avatar upload
-                  <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
-                </label>
+                <div class="avatar-row">
+                  <img id="avatarPreviewLarge" class="avatar-preview-large" alt="Avatar preview">
+                  <label class="avatar-picker">
+                    Avatar upload
+                    <input id="avatarInput" name="avatarInput" type="file" accept="image/*">
+                  </label>
+                </div>
                 <button type="submit">Save profile</button>
               </form>
             </div>
@@ -39,69 +42,76 @@
 
         <div class="play-layout">
           <section class="arena-wrap" aria-label="Game arena">
-            <div class="hud">
-              <div>
-                <span class="hud-label">Score</span>
-                <strong id="scoreValue">0</strong>
-              </div>
-              <div>
-                <span class="hud-label">Orbs</span>
-                <strong id="orbValue">0</strong>
-              </div>
-              <div>
-                <span class="hud-label">Health</span>
-                <strong id="healthValue">3</strong>
-              </div>
-              <div>
+            <div class="hud-bar is-hidden" id="hudBar">
+              <div class="hud-block">
                 <span class="hud-label">Time</span>
-                <strong id="timeValue">75</strong>
+                <strong class="hud-time" id="timeValue">75</strong>
               </div>
-              <div>
+              <div class="hud-block">
+                <span class="hud-label">Score</span>
+                <strong class="hud-score" id="scoreValue">0</strong>
+              </div>
+              <div class="hud-block">
                 <span class="hud-label">Combo</span>
-                <strong id="comboValue">x1</strong>
+                <strong class="hud-combo" id="comboValue">×1</strong>
               </div>
-              <div>
-                <span class="hud-label">Shield</span>
-                <strong id="shieldValue">0</strong>
+              <div class="hud-block">
+                <span class="hud-label">Hull</span>
+                <strong class="hud-hearts" id="healthValue">◆ ◆ ◆</strong>
               </div>
-              <div>
-                <span class="hud-label">Pace</span>
-                <strong id="paceValue">—</strong>
-              </div>
+              <span class="hud-pace" id="paceValue" hidden></span>
+              <div class="hud-fx" id="hudFx" aria-hidden="true"></div>
+              <span class="hud-mode" id="hudMode"></span>
             </div>
             <div class="game-stage">
               <button type="button" class="mute-toggle" id="muteToggle" aria-label="Toggle sound" aria-pressed="false">♪ on</button>
               <canvas id="gameCanvas" width="720" height="460" aria-label="Collect orbit crystals, grab shields, and dodge coral hazards"></canvas>
+              <div class="joystick" id="joystick" aria-hidden="true">
+                <div class="joystick-knob" id="joystickKnob"></div>
+              </div>
               <div class="home-screen" id="homeScreen">
                 <div class="home-content">
-                  <p class="home-kicker">Retro arcade run</p>
+                  <p class="home-kicker">Retro drone arcade · beat the Core Warden</p>
                   <h2>Scoreyard</h2>
-                  <div class="daily-card">
-                    <div class="daily-tag-row">
-                      <span class="daily-emblem" aria-hidden="true"></span>
-                      <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
-                    </div>
-                    <p class="daily-sub" id="dailySub">Everyone plays the same arena today.</p>
-                    <div class="daily-stats">
-                      <div class="stat-chip">
-                        <span class="stat-label">Today best</span>
-                        <strong id="todayBestValue">—</strong>
-                      </div>
-                      <div class="stat-chip">
-                        <span class="stat-label">All-time</span>
-                        <strong id="allTimeBestValue">0</strong>
-                      </div>
-                    </div>
-                    <button type="button" class="primary-btn arcade-start" id="homeStartGame">▶ Play today</button>
+                  <div class="daily-tag-row">
+                    <span class="daily-emblem" aria-hidden="true"></span>
+                    <p class="daily-tag" id="dailyTag">★ Today's Challenge · <span id="dailySeedLabel">—</span></p>
+                  </div>
+                  <div class="mode-row">
+                    <button type="button" class="mode-card mode-card-daily" id="homeStartGame">
+                      <span class="mode-name">Daily Challenge</span>
+                      <span class="mode-desc" id="dailySub">Everyone plays the same arena today.</span>
+                      <span class="mode-meta">Today best · <strong id="todayBestValue">—</strong></span>
+                    </button>
+                    <button type="button" class="mode-card" id="freeStartGame">
+                      <span class="mode-name">Free Play</span>
+                      <span class="mode-desc">A fresh random arena every run. Unlimited practice.</span>
+                      <span class="mode-meta mode-meta-dim">Practice mode</span>
+                    </button>
+                  </div>
+                  <p class="best-line">All-time best · <strong id="allTimeBestValue">0</strong></p>
+                  <p class="controls-hint">WASD / arrows — move · fire is automatic · drag on touch</p>
+                </div>
+              </div>
+              <div class="over-screen is-hidden" id="overScreen">
+                <div class="over-content">
+                  <p class="over-mode" id="overMode">Daily</p>
+                  <p class="over-reason" id="overReason">Time up</p>
+                  <p class="over-score-label">Final score</p>
+                  <p class="over-score" id="overScore">0</p>
+                  <p class="over-best-banner" id="overBestBanner" hidden>NEW BEST! ★</p>
+                  <dl class="over-stats">
+                    <div class="stat-row"><dt>Max combo</dt><dd id="overCombo">×1</dd></div>
+                    <div class="stat-row"><dt>Crystals</dt><dd id="overOrbs">0</dd></div>
+                    <div class="stat-row"><dt>Core Warden</dt><dd id="overBoss">—</dd></div>
+                    <div class="stat-row"><dt id="overBestLabel">Best</dt><dd id="overBest">0</dd></div>
+                  </dl>
+                  <div class="over-buttons">
+                    <button type="button" class="primary-btn" id="overRetry">Retry</button>
                     <button type="button" class="ghost-btn share-btn" id="shareResult" hidden>⧉ Copy result</button>
+                    <button type="button" class="ghost-btn" id="overMenu">Menu</button>
                   </div>
-                  <div class="freeplay-row">
-                    <div class="freeplay-copy">
-                      <strong>Free Play</strong>
-                      <span>unlimited practice · random arena</span>
-                    </div>
-                    <button type="button" class="ghost-btn" id="freeStartGame">Start</button>
-                  </div>
+                  <p class="over-privacy">결과 복사에는 개인정보가 포함되지 않습니다</p>
                 </div>
               </div>
             </div>

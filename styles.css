@@ -1,5 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
+/* Self-hosted (OFL) — keeps the pixel display font working offline */
+@font-face {
+  font-display: swap;
+  font-family: "Press Start 2P";
+  font-style: normal;
+  font-weight: 400;
+  src: url("assets/fonts/PressStart2P-Regular.woff2") format("woff2");
+}
+
 :root {
   color-scheme: dark;
   --bg: #030908;
@@ -22,6 +31,7 @@
     0 22px 70px rgba(0, 0, 0, 0.46),
     0 0 38px rgba(34, 215, 181, 0.12);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  --pixel: "Press Start 2P", var(--mono);
   --sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-family: var(--sans);
 }
@@ -175,7 +185,7 @@ button:disabled {
 .topbar,
 .section-head,
 .controls-row,
-.hud,
+.hud-bar,
 .filters,
 .avatar-preview,
 .player-cell {
@@ -269,24 +279,27 @@ h2 {
   position: relative;
 }
 
-.hud {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  margin-bottom: 12px;
+/* DOM HUD bar (design handoff): one slim strip above the canvas */
+.hud-bar {
+  background:
+    linear-gradient(180deg, rgba(10, 37, 39, 0.94), rgba(3, 14, 16, 0.94));
+  border: 2px solid rgba(126, 255, 229, 0.3);
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 10px;
+  min-height: 56px;
+  padding: 6px 14px;
 }
 
-.hud > div {
-  background:
-    linear-gradient(180deg, rgba(10, 37, 39, 0.94), rgba(3, 14, 16, 0.94)),
-    radial-gradient(circle at top right, rgba(34, 215, 181, 0.17), transparent 68%);
-  border: 1px solid rgba(126, 255, 229, 0.24);
-  border-radius: 8px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 0 18px rgba(34, 215, 181, 0.08);
+.hud-bar.is-hidden {
+  visibility: hidden;
+}
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
-  padding: 0.7rem;
 }
 
 .hud-label {
@@ -300,29 +313,115 @@ h2 {
   text-transform: uppercase;
 }
 
-.hud strong {
+.hud-bar strong {
   color: var(--teal-strong);
   font-family: var(--mono);
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   text-shadow: 0 0 16px rgba(126, 255, 229, 0.42);
 }
 
-.hud-pop {
-  animation: hud-pop 0.42s ease;
+.hud-bar .hud-time {
+  font-family: var(--pixel);
+  font-size: 1.05rem;
+  min-width: 48px;
 }
 
-@keyframes hud-pop {
-  0% {
-    transform: scale(1);
-  }
+.hud-bar .hud-time.warn {
+  animation: hudBlink 0.5s steps(2) infinite;
+  color: var(--coral);
+  text-shadow: 0 0 12px rgba(255, 92, 122, 0.8);
+}
 
-  45% {
-    color: var(--gold);
-    transform: scale(1.24);
-  }
+.hud-bar .hud-score {
+  font-family: var(--pixel);
+  font-size: 0.95rem;
+  min-width: 96px;
+}
 
-  100% {
-    transform: scale(1);
+.hud-bar .hud-combo {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(247, 214, 74, 0.6);
+}
+
+.hud-bar .hud-combo.hot {
+  animation: hudBlink 0.9s steps(2) infinite;
+}
+
+.hud-bar .hud-hearts {
+  color: var(--coral);
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+}
+
+.hud-bar .hud-hearts .dim {
+  color: rgba(244, 255, 248, 0.18);
+}
+
+.hud-bar .hud-hearts .shield {
+  color: var(--blue);
+}
+
+.hud-bar .hud-hearts.low {
+  animation: hudBlink 0.7s steps(2) infinite;
+}
+
+.hud-pace {
+  border: 1px solid;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 8px;
+}
+
+.hud-pace.ahead {
+  background: rgba(34, 215, 181, 0.08);
+  border-color: rgba(34, 215, 181, 0.5);
+  color: var(--teal);
+}
+
+.hud-pace.behind {
+  background: rgba(255, 92, 122, 0.08);
+  border-color: rgba(255, 92, 122, 0.5);
+  color: var(--coral);
+}
+
+.hud-fx {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.fx-chip {
+  border: 1px solid var(--c);
+  color: var(--c);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  text-shadow: 0 0 8px var(--c);
+}
+
+.hud-mode {
+  color: rgba(159, 245, 232, 0.55);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+}
+
+@keyframes hudBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-bar .hud-time.warn,
+  .hud-bar .hud-combo.hot,
+  .hud-bar .hud-hearts.low {
+    animation: none;
   }
 }
 
@@ -707,9 +806,6 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .hud {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 680px) {
@@ -750,10 +846,6 @@ th {
     width: 100%;
   }
 
-  .hud {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .filters {
     align-items: stretch;
     flex-direction: column;
@@ -765,17 +857,9 @@ th {
 .daily-card {
   margin: 1.1rem auto 0.9rem;
   max-width: 400px;
-  padding: 1rem 1.1rem 1.15rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(34, 215, 181, 0.1), rgba(3, 12, 15, 0.2)),
-    var(--panel-strong);
-  box-shadow:
-    0 0 0 1px rgba(127, 255, 240, 0.18),
-    0 14px 36px rgba(0, 0, 0, 0.5);
+  padding: 0.4rem 0.4rem 0.6rem;
   text-align: left;
-  text-shadow: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .daily-tag {
@@ -1085,9 +1169,10 @@ button:active,
   /* source 408x265 */
   --slice-modal: 52;
   --biw-modal: 26px;
-  /* source 286x92 */
-  --slice-capsule: 20 44;
-  --biw-capsule: 10px 22px;
+  /* source 286x92; side insets reach past the dot/chevron ornaments so they
+     pin to the fixed end zones instead of stretching under the text */
+  --slice-capsule: 20 96 20 102;
+  --biw-capsule: 8px 38px 8px 41px;
   /* source 376x135 */
   --slice-plaque: 24 48;
   --biw-plaque: 12px 24px;
@@ -1117,7 +1202,7 @@ button:active,
   padding: 6px 2px;
 }
 
-/* Stat capsules: stat chips, ghost buttons (DOM .hud stays legacy-hidden) */
+/* Stat capsules: stat chips, ghost buttons */
 .stat-chip,
 .ghost-btn,
 #endGame {
@@ -1197,21 +1282,73 @@ button:active,
   width: 64px;
 }
 
-/* Profile summary: avatar nests in the asset's circular zone */
+/* Profile summary: a 64px avatar covers the asset's circular zone outright,
+   so the frame can stretch without the circle distorting what you see */
 .player-badge .profile-summary {
   border-style: solid;
   border-color: transparent;
-  border-width: var(--biw-profile);
+  border-width: 11px 13px 15px 56px;
   border-image: var(--ui-profile-card) var(--slice-profile) fill stretch;
   border-radius: 0;
   background: none;
-  min-height: 48px;
-  padding: 2px 8px 2px 0;
+  min-height: 72px;
+  padding: 4px 12px 4px 0;
 }
 
 .player-badge .profile-summary img {
   border-radius: 50%;
-  margin-left: -34px;
+  box-shadow:
+    0 0 0 2px rgba(126, 255, 229, 0.35),
+    0 0 14px rgba(34, 215, 181, 0.35);
+  height: 64px;
+  margin-left: -52px;
+  object-fit: cover;
+  position: relative;
+  width: 64px;
+}
+
+.player-badge .profile-summary strong {
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .player-badge .profile-summary {
+    border-width: 9px 11px 12px 44px;
+    min-height: 56px;
+  }
+
+  .player-badge .profile-summary img {
+    height: 48px;
+    margin-left: -40px;
+    width: 48px;
+  }
+}
+
+/* Popover upload preview: big enough to actually judge the image */
+.avatar-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.avatar-row .avatar-picker {
+  flex: 1;
+  min-width: 0;
+}
+
+.avatar-preview-large {
+  background:
+    radial-gradient(circle at 35% 30%, var(--teal-strong), transparent 36%),
+    linear-gradient(135deg, rgba(255, 77, 225, 0.3), rgba(2, 10, 12, 0.9));
+  border: 1px solid var(--line-strong);
+  border-radius: 24%;
+  box-shadow:
+    0 0 0 2px rgba(255, 77, 225, 0.14),
+    0 0 18px rgba(126, 255, 229, 0.2);
+  flex: none;
+  height: 72px;
+  object-fit: cover;
+  width: 72px;
 }
 
 /* Leaderboard: flat panel, framed data rows (grid rows so border-image works) */
@@ -1254,6 +1391,535 @@ button:active,
 }
 
 .freeplay-row {
-  padding: 0.15rem 0.3rem;
+  padding: 0.15rem 0.45rem;
+}
+
+/* ===== Polish pass: compact topbar, popover layout, ranks ===== */
+
+/* Compact topbar — the home hero owns the big SCOREYARD title */
+.topbar > div:first-child {
+  align-items: baseline;
+  display: flex;
+  gap: 12px;
+}
+
+.topbar .eyebrow {
+  margin: 0;
+}
+
+.topbar h1 {
+  font-family: var(--mono);
+  font-size: 1.08rem;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-shadow:
+    0 0 7px rgba(126, 255, 229, 0.6),
+    2px 2px 0 rgba(255, 77, 225, 0.32);
+  text-transform: uppercase;
+}
+
+/* Profile popover: stack fields — neutralize the 4-column profile-form
+   placements that pushed the submit button outside the frame */
+.player-badge form.profile-popover {
+  width: min(320px, 84vw) !important;
+}
+
+.player-badge form.profile-popover .avatar-picker,
+.player-badge form.profile-popover button[type="submit"] {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  height: auto;
+  min-height: 48px;
+}
+
+.player-badge form.profile-popover button[type="submit"] {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--biw-plaque);
+  border-image: var(--ui-score-plaque) var(--slice-plaque) fill stretch;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  padding: 0.2rem 0.5rem;
+  text-shadow:
+    0 0 8px rgba(126, 255, 229, 0.72),
+    0 2px 0 rgba(0, 0, 0, 0.42);
+  white-space: nowrap;
+}
+
+/* Stat chips: label over value, centered in the clean middle zone */
+.stat-chip {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+
+.stat-chip strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Leaderboard ranks: CSS counters, no JS */
+.table-wrap tbody {
+  counter-reset: rank;
+}
+
+.table-wrap tbody tr {
+  counter-increment: rank;
+  transition: filter 0.15s ease;
+}
+
+.table-wrap tbody tr:hover {
+  filter: brightness(1.18);
+}
+
+.table-wrap tbody td:first-child .player-cell::before {
+  color: var(--teal-strong);
+  content: counter(rank, decimal-leading-zero);
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(34, 215, 181, 0.5);
+  width: 26px;
+}
+
+.table-wrap tbody tr:nth-child(1) .player-cell::before {
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(247, 214, 74, 0.65);
+}
+
+.table-wrap tbody tr:nth-child(2) .player-cell::before {
+  color: #cfe3ea;
+  text-shadow: 0 0 10px rgba(207, 227, 234, 0.55);
+}
+
+.table-wrap tbody tr:nth-child(3) .player-cell::before {
+  color: #e8a06b;
+  text-shadow: 0 0 10px rgba(232, 160, 107, 0.55);
+}
+
+.table-wrap tbody tr:nth-child(-n + 3) .score-cell {
+  color: var(--ink);
+  text-shadow: 0 0 10px rgba(126, 255, 229, 0.5);
+}
+
+/* Daily tag: keep the date on one line on wide screens */
+@media (min-width: 680px) {
+  .daily-tag {
+    white-space: nowrap;
+  }
+}
+
+.empty-state {
+  border: 1px dashed rgba(126, 255, 229, 0.28);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+}
+
+/* The retro-home-frame asset does the framing: drop the redundant
+   rectangular game-panel chrome (the leaderboard panel keeps its own) */
+.game-panel {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.game-panel::before {
+  display: none;
+}
+
+/* Hide the arena ring while the home overlay is up; it returns during play */
+.arena-wrap:has(.home-screen:not(.is-hidden)) {
+  box-shadow: none;
+}
+
+/* Leaderboard column matches the 960px home frame */
+.leaderboard-panel {
+  max-width: 960px;
+}
+
+/* Run controls only matter during a run — the home and over overlays have
+   their own CTAs. The control hint stays visible as pre-game info. */
+.game-panel:has(.home-screen:not(.is-hidden)) .controls-row button,
+.game-panel:has(.home-screen:not(.is-hidden)) .controls-row #endGame,
+.game-panel:has(.over-screen:not(.is-hidden)) .controls-row button,
+.game-panel:has(.over-screen:not(.is-hidden)) .controls-row #endGame {
+  display: none;
+}
+
+/* Consistent control sizing during play: primary keeps its plaque weight,
+   END RUN matches its height */
+.controls-row .primary-btn,
+.controls-row #endGame {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 54px;
+}
+
+.controls-row #endGame {
+  padding-inline: 0.7rem;
+}
+
+/* ===== Design handoff: mode cards, over screen, pixel type ===== */
+
+.home-content h2 {
+  font-family: var(--pixel);
+  font-size: clamp(1.3rem, 3.4vw, 2.1rem);
+  letter-spacing: 0.04em;
+}
+
+.mode-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin: 1.1rem 0 0.9rem;
+}
+
+.mode-card {
+  background: rgba(5, 18, 20, 0.78);
+  border: 2px solid rgba(126, 255, 229, 0.35);
+  border-radius: 0;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 16px 14px;
+  text-align: center;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+  width: 230px;
+}
+
+.mode-card:hover,
+.mode-card:focus-visible {
+  border-color: var(--teal);
+  box-shadow:
+    0 0 22px rgba(34, 215, 181, 0.35),
+    inset 0 0 18px rgba(34, 215, 181, 0.08);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.mode-card-daily {
+  border-color: rgba(126, 255, 229, 0.55);
+}
+
+.mode-name {
+  color: var(--teal-strong);
+  font-family: var(--pixel);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mode-desc {
+  color: rgba(244, 255, 248, 0.6);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.mode-meta {
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mode-meta-dim {
+  color: rgba(159, 245, 232, 0.5);
+}
+
+.best-line {
+  color: var(--mint);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+}
+
+.controls-hint {
+  color: rgba(244, 255, 248, 0.38);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* Game-over screen: same overlay pattern as .home-screen */
+.over-screen {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 92, 122, 0.06), transparent 30rem),
+    rgba(3, 12, 15, 0.93);
+  border-radius: 8px;
+  bottom: 0;
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+  left: 0;
+  opacity: 1;
+  overflow: hidden;
+  padding: clamp(18px, 4vw, 44px);
+  pointer-events: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 5;
+}
+
+.over-screen.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.985);
+}
+
+.over-content {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.over-mode {
+  color: rgba(159, 245, 232, 0.55);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.over-reason {
+  color: var(--coral);
+  font-family: var(--pixel);
+  font-size: 0.95rem;
+  margin: 0;
+  text-shadow: 0 0 14px rgba(255, 92, 122, 0.7);
+  text-transform: uppercase;
+}
+
+.over-score-label {
+  color: rgba(159, 245, 232, 0.5);
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  margin: 6px 0 0;
+  text-transform: uppercase;
+}
+
+.over-score {
+  color: var(--ink);
+  font-family: var(--pixel);
+  font-size: clamp(1.8rem, 5vw, 2.9rem);
+  margin: 0;
+  text-shadow: 0 0 20px rgba(34, 215, 181, 0.7);
+}
+
+.over-best-banner {
+  animation:
+    bestPop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both,
+    bestGlow 1.1s ease-in-out 0.45s infinite alternate;
+  color: var(--gold);
+  font-family: var(--pixel);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+@keyframes bestPop {
+  from { opacity: 0; transform: scale(0.2); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bestGlow {
+  from { text-shadow: 0 0 10px rgba(247, 214, 74, 0.6); }
+  to {
+    text-shadow:
+      0 0 26px rgba(247, 214, 74, 1),
+      0 0 50px rgba(247, 214, 74, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .over-best-banner {
+    animation: none;
+  }
+}
+
+.over-stats {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 4px;
+  width: min(320px, 80vw);
+}
+
+.over-stats .stat-row {
+  border-bottom: 1px dashed rgba(126, 255, 229, 0.18);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  padding-bottom: 5px;
+}
+
+.over-stats dt {
+  color: rgba(159, 245, 232, 0.55);
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.over-stats dd {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-weight: 700;
+  margin: 0;
+}
+
+.over-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.over-privacy {
+  color: rgba(244, 255, 248, 0.35);
+  font-size: 0.68rem;
+  margin: 4px 0 0;
+}
+
+@media (max-width: 680px) {
+  .mode-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mode-card {
+    width: min(280px, 86vw);
+  }
+}
+
+/* Touch joystick: ring + knob anchored at the touch origin */
+.joystick {
+  border: 2px solid rgba(34, 215, 181, 0.35);
+  border-radius: 50%;
+  display: none;
+  height: 96px;
+  margin-left: -48px;
+  margin-top: -48px;
+  pointer-events: none;
+  position: fixed;
+  width: 96px;
+  z-index: 40;
+}
+
+.joystick.active {
+  display: block;
+}
+
+.joystick-knob {
+  background: rgba(34, 215, 181, 0.25);
+  border: 2px solid var(--teal);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(34, 215, 181, 0.5);
+  height: 42px;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 42px;
+}
+
+/* Topbar: wordmark + slim storage badge left, profile alone at the right end
+   (base .topbar is a centered column — flip it to a spaced row) */
+.topbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.topbar .storage-status {
+  font-size: 0.68rem;
+  min-width: 0;
+  padding: 0.28rem 0.7rem;
+}
+
+/* Readability: stat values and capsule-button labels were too dim */
+.stat-chip .stat-label {
+  color: var(--mint);
+}
+
+.stat-chip strong {
+  color: var(--ink);
+  font-size: 1.45rem;
+  line-height: 1.1;
+  text-shadow:
+    0 0 10px rgba(126, 255, 229, 0.55),
+    0 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.ghost-btn,
+#endGame {
+  color: var(--ink);
+  font-size: 0.95rem;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.7),
+    0 0 8px rgba(34, 215, 181, 0.5);
+}
+
+.freeplay-copy strong {
+  color: var(--ink);
+}
+
+.freeplay-copy span {
+  color: var(--mint);
+}
+
+/* Leaderboard: scroll inside the panel instead of growing the page */
+.table-wrap {
+  max-height: 432px;
+  overflow-y: auto;
+  scrollbar-color: rgba(34, 215, 181, 0.55) rgba(3, 12, 15, 0.8);
+  scrollbar-width: thin;
+}
+
+.table-wrap::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(34, 215, 181, 0.55);
+  border-radius: 4px;
+}
+
+.table-wrap::-webkit-scrollbar-track {
+  background: rgba(3, 12, 15, 0.8);
+}
+
+.table-wrap thead {
+  background: rgba(3, 12, 15, 0.95);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.table-wrap::after {
+  background: linear-gradient(transparent, rgba(3, 12, 15, 0.9));
+  bottom: 0;
+  content: "";
+  display: block;
+  height: 26px;
+  margin-top: -26px;
+  pointer-events: none;
+  position: sticky;
 }
 
